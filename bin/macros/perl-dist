@@ -1,0 +1,552 @@
+#!/Users/juster/perl5/perlbrew/perls/perl-5.14.1/bin/perl
+
+use warnings 'FATAL' => 'all';
+use strict;
+
+package Convert;
+
+use Module::CoreList;
+use LWP::UserAgent qw();
+use YAML::XS qw();
+use version qw();
+
+sub dist2pkg
+{
+    my ($name, $ver) = @_;
+    return dist_pkgname($name), dist_pkgver($ver);
+}
+
+# Copied from CPANPLUS::Dist::Arch
+sub dist_pkgname
+{
+    my ($distname) = @_;
+
+    # Package names should be lowercase and consist of alphanumeric
+    # characters only (and hyphens!)...
+    $distname =  lc $distname;
+    $distname =~ tr/_+/--/;
+    $distname =~ tr/-a-z0-9//cd; # Delete all other chars
+    $distname =~ tr/-/-/s;
+
+    # Delete leading or trailing hyphens...
+    $distname =~ s/\A-//;
+    $distname =~ s/-\z//;
+
+    die qq{Dist name '$distname' completely violates packaging standards}
+        if length $distname == 0;
+
+    # Don't prefix the package with perl- if it IS perl...
+    $distname = "perl-$distname" unless $distname eq 'perl';
+
+    return $distname;
+}
+
+sub dist_pkgver
+{
+    my ($version) = @_;
+
+    # Package versions should be numbers and decimal points only...
+    $version =~ tr/-/./;
+    $version =~ tr/_0-9.//cd;
+
+    # Remove developer versions because pacman has no special logic
+    # to handle comparing them to regular versions like perl does.
+    $version =~ s/_\d+\z//;
+
+    $version =~ tr/././s;
+    $version =~ s/^[.]|[.]$//g;
+
+    return $version;
+}
+
+#---HELPER FUNCTION---
+# Decide if the dist. is named after the module.
+sub _ismainmod
+{
+    my ($mod_name, $dist_name) = @_;
+
+    $mod_name =~ tr/:/-/s;
+    return (lc $mod_name) eq (lc $dist_name);
+}
+
+#---HELPER FUNCTION---
+# Merges the right-hand deps into the left-hand deps.
+sub _merge
+{
+    my ($left_deps, $right_deps) = @_;
+
+    MERGE_LOOP:
+    while ( my ($pkg, $ver) = each %$right_deps ) {
+        if ( $left_deps->{$pkg} ) {
+            my $leftver  = version->parse($left_deps->{$pkg});
+            my $rightver = version->parse($ver);
+            next MERGE_LOOP if $leftver > $rightver;
+        }
+        $left_deps->{$pkg} = $ver;
+    }
+
+    return;
+}
+
+#---HELPER FUNCTION---
+# Merge duplicate deps into $left always storing the greatest version there.
+sub _mergedups
+{
+    my ($left, $right) = @_;
+
+    for my $name (keys %$left) {
+        my $rver = $right->{$name} or next;
+        my $lver = $left->{$name};
+        my $lvo  = ($lver ? version->parse($lver) : 0);
+        my $rvo  = ($rver ? version->parse($rver) : 0);
+        $left->{$name} = ($lvo > $rvo ? $lvo : $rvo);
+    }
+
+    return;
+}
+
+#---HELPER FUNCTION---
+sub _yankcheckers
+{
+    my ($deps_ref) = @_;
+    my %checkdeps;
+
+    for my $testdep (grep { /perl-test-/ } keys %$deps_ref) {
+        my $val = delete $deps_ref->{$testdep};
+        $checkdeps{$testdep} = $val if $val;
+    }
+
+    # Also extract Pod::Coverage module into checkdepends
+    for my $dep ( qw/ perl-pod-coverage / ) {
+        my $val = delete $deps_ref->{$dep};
+        $checkdeps{$dep} = $val if $val;
+    }
+
+    return \%checkdeps;
+}
+
+#---HELPER FUNCTION---
+# Converts a decimal perl version (like $]) into the dotted decimal
+# form that the official ArchLinux perl package uses.
+sub _perldepver
+{
+    my ($perlver) = @_;
+
+    # Fix perl-style vstrings which have a leading "v".
+    return $perlver if $perlver =~ s/\Av//;
+    return $perlver unless $perlver =~ /\A(\d+)[.](\d{3})(\d{1,3})\z/;
+
+    # Re-apply the missing trailing zeroes.
+    my $patch = $3;
+    $patch .= q{0} x (3 - length($patch));
+    return sprintf '%d.%d.%d', $1, $2, $patch;
+}
+
+#---PUBLIC FUNCNTION---
+# Translates CPAN module dependencies into ArchLinux package dependencies.
+sub _reqs2deps
+{
+    my ($prereqs) = @_;
+
+    my %pkgdeps;
+
+    CPAN_DEP_LOOP:
+    while (my ($name, $ver) = each %$prereqs) {
+        # Sometimes a perl version is given as a prerequisite
+        if ($name eq 'perl') {
+            $pkgdeps{'perl'} = _perldepver($ver);
+            next CPAN_DEP_LOOP;
+        }
+
+# Ideally we could take advantage of the perl package's provides list
+# and add dependencies for core modules.
+
+# This is more robust and handles the problem of packages built
+# with a different version of perl than the perl that is present
+# when the package is installed.
+
+# The problem is that the perl package provides list still needs work.
+# While I was trying to generate a provides list I noticed the
+# Module::CoreList module had some incorrect version numbers
+# as well. So until I get around to reporting these bugs I will
+# just go back to not depending on packages provided by perl.
+
+        # 0+$] is needed to force the perl version into number-dom
+        # otherwise trailing zeros cause problems
+        my $bundled_version = $Module::CoreList::version{ 0 + $] }->{$name};
+        if ($bundled_version) {
+            # Avoid parsing an empty string (causes an error) or 0.
+            next CPAN_DEP_LOOP unless $ver;
+
+            # Avoid parsing a bundled version of 0. Is this possible?
+            my $bundle_vobj = version->parse($bundled_version);
+            my $dep_vobj    = version->parse($ver);
+            next CPAN_DEP_LOOP if $bundle_vobj >= $dep_vobj;
+        }
+
+        my $dist = _distofmod($name);
+        my $pkgname = dist_pkgname($dist);
+
+        # If the module is not named after the distribution, ignore its
+        # version which might not match the distribution.
+        undef $ver unless _ismainmod($name, $dist);
+
+        # If two module prereqs are in the same CPAN distribution then
+        # the version required for the main module will override.
+        # (because versions specified for other modules in the dist
+        # are 0)
+        $pkgdeps{$pkgname} ||= ($ver ? dist_pkgver($ver) : 0);
+    }
+
+    return \%pkgdeps;
+}
+
+sub prereqs
+{
+    my ($pkgname, $prereqs) = @_;
+
+    # maps perl names for different dependencies to ArchLinux's names
+    my %namemap = ('configure' => 'makedepends',
+                   'build'     => 'makedepends',
+                   'testing'   => 'checkdepends',
+                   'runtime'   => 'depends');
+
+    my %pkgdeps;
+    while (my ($perl, $arch) = each %namemap) {
+        $pkgdeps{$arch} ||= {};
+        my $reqs = $prereqs->{$perl}{'requires'};
+        my $deps = _reqs2deps($reqs) if $reqs;
+        _merge($pkgdeps{$arch}, $deps) if $deps;
+    }
+
+    # ArchLinux now has a separate array for dependencies that we only
+    # need for checking (aka "testing"). Older perl METAs do not
+    # have this separated. Force any test modules to be checkdepends.
+    if (!$pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/) {
+        my $checkdeps;
+        my $makedeps = $pkgdeps{'makedepends'};
+        _merge($checkdeps, _yankcheckers($makedeps));
+        $pkgdeps{'checkdepends'} = $checkdeps;
+    }
+
+    # We at least require perl, if nothing else.
+    unless (grep { scalar keys %$_ > 0 } values %pkgdeps) {
+        $pkgdeps{'depends'}{'perl'} = 0;
+    }
+
+    _mergedups(@pkgdeps{qw/makedepends checkdepends/});
+    _mergedups(@pkgdeps{qw/depends makedepends/});
+
+    # Convert all deps into arrays of strings.
+    for my $deptype (keys %pkgdeps) {
+        $pkgdeps{$deptype} = _stringify($pkgdeps{$deptype});
+    }
+
+    return \%pkgdeps;
+}
+
+#---HELPER FUNCTION---
+sub _stringify
+{
+    my ($deps) = @_;
+
+    my @depstrs;
+    for my $pkg (sort keys %$deps) {
+        my $ver = $deps->{$pkg};
+        my $str = ($ver eq '0' ? $pkg : "$pkg>=$ver");
+        push @depstrs, $str;
+    }
+
+    return \@depstrs;
+}
+
+my $UA;
+sub _distofmod
+{
+    my ($mod) = @_;
+
+    my $UA ||= LWP::UserAgent->new();
+    my $url  = "http://cpanmetadb.appspot.com/v1.0/package/$mod";
+    my $resp = $UA->get($url);
+    die "failed to lookup dist for $mod: " . $resp->status_line
+        unless $resp->is_success;
+
+    $resp = YAML::XS::Load($resp->content);
+    my $file = $resp->{'distfile'};
+    $file =~ s{.*/}{};
+    $file =~ s{-[^-]+\z}{};
+
+    return $file;
+}
+
+#-----------------------------------------------------------------------------
+
+package main;
+
+use File::Basename qw(basename dirname);
+use File::Spec::Functions qw(catfile);
+use File::Find qw(find);
+
+use JSON::XS qw(decode_json); # parse META.{json,yml} files
+use YAML::XS qw();
+use Pod::Select qw(); # search POD for description
+
+use Digest::MD5 qw(); # for md5sums & sha512sums
+use Digest::SHA qw();
+
+# Override a package's name to conform to packaging guidelines.
+# Copied entries from CPANPLUS::Dist::Pacman and alot more
+# from searching for packages with perl in their name in
+# [extra] and [community]
+my $NAME_OVERRIDES =
+{ map { split /[\s=]+/ } split /\s*\n+\s*/, <<'END_OVERRIDES' };
+
+libwww-perl    = perl-libwww
+aceperl        = perl-ace
+mod_perl       = mod_perl
+
+glade-perl-two = perl-glade-two
+Gnome2-GConf   = gconf-perl
+Gtk2-GladeXML  = glade-perl
+Glib           = glib-perl
+Gnome2         = gnome-perl
+Gnome2-VFS     = gnome-vfs-perl
+Gnome2-Canvas  = gnomecanvas-perl
+Gnome2-GConf   = gconf-perl
+Gtk2           = gtk2-perl
+Cairo          = cairo-perl
+Pango          = pango-perl
+
+SDL_Perl       = sdl_perl
+Perl-Critic    = perl-critic
+Perl-Tidy      = perl-tidy
+App-Ack        = ack
+TermReadKey    = perl-term-readkey
+
+END_OVERRIDES
+
+sub main
+{
+    my $distpath = shift or die "Usage: $0 [path to cpan dist file]\n";
+    my $dir  = dirname($distpath);
+    my $file = basename($distpath);
+    my $info = distinfo($file);
+
+    chdir $dir or die "chdir $dir: $!";
+    $dir = extractdist($file);
+
+    my $meta = loadmeta($dir);
+    my $desc = $meta->{'abstract'};
+    if (!$desc || $desc eq '~') {
+        $meta->{'abstract'} = distdesc($dir, $info->{'mod'});
+    }
+
+    my ($name, $ver) = Convert::dist2pkg(@{$info}{'name', 'ver'});
+    my $deps = Convert::prereqs($name, $meta->{'prereqs'});
+
+    my %pbvars =
+        ('pkgname' => $name,
+         'pkgver'  => $ver,
+         'pkgdesc' => $meta->{'abstract'},
+
+         'arch'       => (xsdist($dir) ? ['i686', 'x86_64'] : 'any'),
+         'md5sums'    => md5sums($file),
+         'sha512sums' => sha512sums($file),
+         'distdir'    => $dir,
+         %$deps,
+         );
+
+    # Since this is a perl distribution, use the perl-pkg template.
+    printf "| perl-pkg %s\n", (-f "$dir/Build.PL" ? "MB" : "MM");
+
+    printjam(\%pbvars);
+}
+
+sub envvar
+{
+    my ($name) = @_;
+    my $val = $ENV{uc $name};
+    ($name => [ split /\s+/, $name ]);
+}
+
+sub distinfo
+{
+    my ($distfile) = @_;
+
+    my @c = split /-/, $distfile;
+    my $ver = pop @c;
+    my $name = join q{-}, @c;
+    my $mod = $name;
+    $mod =~ s/-/::/g;
+    return { 'name' => $name, 'ver' => $ver, 'mod' => $mod };
+}
+
+sub extractdist
+{
+    my ($file) = @_;
+
+    system "bsdtar -xf $file";
+    die "$0: bsdtar failed to extract $file\n" unless $? == 0;
+
+    opendir my $srcdir, '.' or die "opendir: $!";
+    my @dirs = grep { -d $_ && !/\A[.]/ } readdir $srcdir;
+    closedir $srcdir;
+
+    die "$0: many dirs (@dirs) inside the tarball $file\n"
+        if @dirs > 1;
+    die "$0: no dirs found in tarball $file\n" if @dirs == 0;
+    return $dirs[0];
+}
+
+sub printjam
+{
+    my ($pbvars) = @_;
+    while (my ($name, $val) = each %$pbvars) {
+        if (! defined $val || $val eq q{}) {
+            warn "$0: warning: $name is undefined\n";
+            $val = q{};
+        }
+        print "+ $name $_\n" for (ref $val ? @$val : $val);
+    }
+}
+
+sub loadmeta
+{
+    my ($distdir) = @_;
+
+    for my $metaext (qw/json yml/) {
+        my $path = "$distdir/META.$metaext";
+        next unless -f $path;
+
+        open my $metafh, '<', $path or die "open: $!";
+        my $meta = do { local $/; <$metafh> };
+        close $metafh;
+
+        $meta = ($metaext eq 'json' ? decode_json($meta)    :
+                 $metaext eq 'yml'  ? YAML::XS::Load($meta) :
+                 die "internal error: unknown \$metaext: $metaext");
+
+        upgrademeta($meta);
+        return $meta;
+    }
+
+    return undef;
+}
+
+sub upgrademeta
+{
+    my ($meta) = @_;
+
+    return if exists $meta->{'prereqs'};
+
+    my $prereqs;
+    $prereqs->{'configure'}{'requires'} = delete $meta->{'configure_requires'};
+    $prereqs->{'build'    }{'requires'} = delete $meta->{'build_requires'};
+    $prereqs->{'runtime'  }{'requires'} = delete $meta->{'requires'};
+
+    $meta->{'prereqs'} = $prereqs;
+    return;
+}
+
+sub xsdist
+{
+    my ($dir) = @_;
+    my $isxs;
+    find({ 'wanted' => sub { $isxs = 1 if /[.]xs$/ }, 'no_chdir' => 1 }, $dir);
+    return $isxs;
+}
+
+#-----------------------------------------------------------------------------
+
+sub distdesc
+{
+    my ($dir, $modname) = @_;
+    return _poddesc($dir, $modname) || _readmedesc($dir, $modname);
+}
+
+sub _poddesc
+{
+    my ($dir, $modname) = @_;
+
+    my $podselect = Pod::Select->new;
+    $podselect->select('NAME');
+
+    my $modpath = $modname; $modpath =~ s{::}{/}g;
+    my $moddir  = dirname($modpath);
+    my $modfile = basename($modpath);
+
+    # First check under lib/ for a "properly" pathed module, with
+    # nested directories. Then search desperately for a .pm file that
+    # matches the module's last name component.
+
+    my @possible = glob "$dir/{lib/,}{moddir/,}$modfile.{pod,pm}";
+
+    PODSEARCH:
+    for my $podpath ( @possible ) {
+        next PODSEARCH unless -f $podpath;
+
+        # Read the NAME section of the POD into a scalar.
+        my $namesect = q{};
+        open my $podfile, '<', $podpath or next PODSEARCH;
+        open my $podout, '>', \$namesect or die "open: $!";
+
+        $podselect->parse_from_filehandle($podfile, $podout);
+
+        close $podfile;
+        close $podout or die "close: $!";
+
+        next PODSEARCH unless $namesect;
+
+        # Remove formatting codes.
+        $namesect =~ s{ [IBCLEFSXZ]  <(.*?)>  }{$1}gxms;
+        $namesect =~ s{ [IBCLEFSXZ] <<(.*?)>> }{$1}gxms;
+
+        # The short desc is on a line beginning with 'Module::Name - '
+        if ( $namesect =~ / ^ \s* $modname [ -]+ ([^\n]+) /xms ) {
+            print STDERR qq{Found description "$1" in POD};
+            return $1;
+        }
+    }
+
+    return undef;
+}
+
+#---HELPER FUNCTION---
+sub _readmedesc
+{
+    my ($dir, $modname) = @_;
+
+    my $path = catfile($dir, 'README');
+    return undef unless -f $path;
+    open my $fh, '<', $path or die "open: $!";
+
+    while (<$fh>) {
+        chomp;
+        next unless /\ANAME/ ... /\A[A-Z]+/
+            and / \A \s* ${modname} [\s\-]+ (.+) \z /x;
+        print STDERR qq{Found description "$1" in README};
+        return $1;
+    }
+
+    close $fh;
+    return undef;
+}
+
+#-----------------------------------------------------------------------------
+
+sub md5sums
+{
+    return [ map {
+        open my $fh, '<', $_ or die "open: $!";
+        my $md5 = Digest::MD5->new()->addfile($fh)->hexdigest;
+    } @_ ]
+}
+
+sub sha512sums
+{
+    return [ map {
+        my $sha = Digest::SHA->new()->addfile($_)->hexdigest;
+    } @_ ]
+}
+
+main(@ARGV);

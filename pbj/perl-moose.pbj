@@ -1,0 +1,4 @@
+# A prototype, by Justin "juster" Davis
+! perl-cpan Moose
++ replaces perl-class-mop
++ conflicts perl-class-mop

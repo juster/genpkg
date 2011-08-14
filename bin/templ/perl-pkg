@@ -1,0 +1,145 @@
+#!/Users/juster/perl5/perlbrew/perls/perl-5.14.1/bin/perl
+
+use warnings 'FATAL' => 'all';
+use strict;
+
+use Text::Wrap qw(wrap);
+
+my %ACTIONS_OF = ('MM',
+                  { 'build'   => [ q{/usr/bin/perl Makefile.PL}, q{make} ],
+                    'check'   => [ q{make test} ],
+                    'package' => [ q{make DESTDIR="$pkgdir" install} ]
+                   },
+                  'MB',
+                  { 'build'   => [ q{/usr/bin/perl Build.PL}, q{./Build} ],
+                    'check'   => [ q{./Build test} ],
+                    'package' => [ q{./Build install} ]
+                   } );
+
+my $PBBEG = <<'END_BEG';
+# Maintainer : {: packager :}
+# Generator  : pbjam {: pbjver :}
+
+pkgname={: pkgname :}
+pkgver={: pkgver :}
+pkgrel={: pkgrel :}
+pkgdesc={: pkgdesc :}
+arch=({: arch :})
+license=(PerlArtistic GPL)
+options=('!emptydirs')
+depends=({: depends :})
+makedepends=({: makedepends :})
+url={: url :}
+source=({: source :})
+md5sums=({: md5sums :})
+sha512sums=({: sha512sums :})
+_distdir="${srcdir}/{: distdir :}"
+END_BEG
+
+my %FUNCFMTS;
+$FUNCFMTS{'build'} = <<'END_FMT';
+build() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+      PERL_AUTOINSTALL=--skipdeps                            \
+      PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
+      PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
+      MODULEBUILDRC=/dev/null
+
+    cd "$_distdir"
+%s
+  )
+}
+END_FMT
+
+$FUNCFMTS{'check'} = <<'END_FMT';
+check() {
+  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+    cd "$_distdir"
+%s
+  )
+}
+END_FMT
+
+$FUNCFMTS{'package'} = <<'END_FMT';
+package() {
+    cd "$_distdir"
+%s
+    find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+}
+END_FMT
+
+my $PBEND = <<'END_END';
+# Local Variables:
+# mode: shell-script
+# sh-basic-offset: 2
+# End:
+# vim:set ts=2 sw=2 et:
+END_END
+
+# Expands one variable into its bash string representation.
+sub expandvar
+{
+    my ($pbvars, $name) = @_;
+
+    my $val = $pbvars->{$1};
+    if ($name eq 'pkgdesc') {
+        $val->[0] =~ s/([\$\"\`])/\\$1/g;
+        return qq{"$val->[0]"};
+    }
+    elsif ($name =~ /depends$/) {
+        my @deps = map { qq{'$_'} } @$val;
+        return wrap(q{}, q{ } x (length($name) + 2), @deps);
+    }
+    return ($val ? join q{ }, @$val : q{});
+}
+
+# Expand variables used in the template text.
+sub expandvars
+{
+    my ($tmpl, $pbvars) = @_;
+
+    my $txt = $tmpl;
+    $txt =~ s/ {: \s* (\w+)  \s* :} /expandvar($pbvars, $1)/gex;
+    return $txt;
+}
+
+# Convert actions array into lines of bash to insert into template.
+sub bashify
+{
+    my (@lines) = @_;
+#     use Data::Dump qw(dump);
+#     print STDERR dump($lines), "\n";
+    my $txt = join qq{\n}, map { s/^/    /gm; $_ } @lines;
+    return $txt
+}
+
+sub printpb
+{
+    my ($btype, $pbvars) = @_;
+    my $acts = $ACTIONS_OF{$btype}
+        or die "$0: unknown build type ($btype)\n";
+
+    print expandvars($PBBEG, $pbvars), "\n";
+    for my $func (qw/build check package/) {
+        printf $FUNCFMTS{$func}, bashify(@{$acts->{$func}});
+        print "\n";
+    }
+    print $PBEND;
+}
+
+sub readvars
+{
+    my %pbvars;
+    my $name;
+    local $/ = ""; # split records on empty lines
+    while (<STDIN>) {
+        my ($name, @vals) = split /\n/;
+        $pbvars{$name} = \@vals;
+    }
+
+    return \%pbvars;
+}
+
+my $type = shift or die qq{$0: please provide "MM" or "MB" as argument\n};
+my $vars = readvars();
+printpb($type, $vars);

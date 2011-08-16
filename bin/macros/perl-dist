@@ -45,13 +45,13 @@ sub dist_pkgver
 {
     my ($version) = @_;
 
-    # Package versions should be numbers and decimal points only...
-    $version =~ tr/-/./;
-    $version =~ tr/_0-9.//cd;
-
     # Remove developer versions because pacman has no special logic
-    # to handle comparing them to regular versions like perl does.
-    $version =~ s/_\d+\z//;
+    # to handle comparing them to regular versions such as perl uses.
+    $version =~ s/_[^_]+\z//;
+
+    # Package versions should be numbers and decimal points only...
+    $version =~ tr/-_/../;
+    $version =~ tr/0-9.//cd;
 
     $version =~ tr/././s;
     $version =~ s/^[.]|[.]$//g;

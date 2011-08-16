@@ -95,7 +95,7 @@ sub _mergedups
     my ($left, $right) = @_;
 
     for my $name (keys %$left) {
-        my $rver = $right->{$name} or next;
+        my $rver = delete $right->{$name} or next;
         my $lver = $left->{$name};
         my $lvo  = ($lver ? version->parse($lver) : 0);
         my $rvo  = ($rver ? version->parse($rver) : 0);
@@ -208,21 +208,23 @@ sub prereqs
     # maps perl names for different dependencies to ArchLinux's names
     my %namemap = ('configure' => 'makedepends',
                    'build'     => 'makedepends',
-                   'testing'   => 'checkdepends',
+                   'test'      => 'checkdepends',
                    'runtime'   => 'depends');
 
     my %pkgdeps;
     while (my ($perl, $arch) = each %namemap) {
-        $pkgdeps{$arch} ||= {};
         my $reqs = $prereqs->{$perl}{'requires'};
         my $deps = _reqs2deps($reqs) if $reqs;
-        _merge($pkgdeps{$arch}, $deps) if $deps;
+
+        next unless keys %$deps;
+        if ($pkgdeps{$arch}) { _merge($pkgdeps{$arch}, $deps); }
+        else { $pkgdeps{$arch} = $deps; }
     }
 
     # ArchLinux now has a separate array for dependencies that we only
     # need for checking (aka "testing"). Older perl METAs do not
     # have this separated. Force any test modules to be checkdepends.
-    if (!$pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/) {
+    if (! $pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/) {
         my $checkdeps;
         my $makedeps = $pkgdeps{'makedepends'};
         _merge($checkdeps, _yankcheckers($makedeps));

@@ -1,4 +1,4 @@
-#!/Users/juster/perl5/perlbrew/perls/perl-5.14.1/bin/perl
+#!/usr/bin/env perl
 
 use warnings 'FATAL' => 'all';
 use strict;

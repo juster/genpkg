@@ -237,7 +237,7 @@ sub prereqs
     }
 
     _mergedups(@pkgdeps{qw/makedepends checkdepends/});
-    _mergedups(@pkgdeps{qw/depends makedepends/});
+    _mergedups(@pkgdeps{qw/depends     makedepends/});
 
     # Convert all deps into arrays of strings.
     for my $deptype (keys %pkgdeps) {

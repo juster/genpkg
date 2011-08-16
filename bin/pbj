@@ -43,8 +43,9 @@ cd "$pkgroot/$pkg"
 
 export PATH="$PATH:$bindir/macros:$bindir/templ"
 
-# Provide values for things macros won't be able to.
-printf "+ pbjver $VERSION\n+ pkgrel ${PKGREL:-1}\n" \
+# Match the pkgname to the .pbj filename.
+# Provide values for other things macros won't be able to.
+printf "+ pkgname $pkg\n+ pkgrel ${PKGREL:-1}\n+ pbjver $VERSION\n" \
     | cat - "$jamfile" \
     | awk -v packager="$PACKAGER" -f "$bindir/pbjparse.awk" \
     > PKGBUILD

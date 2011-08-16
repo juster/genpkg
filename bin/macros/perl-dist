@@ -347,8 +347,7 @@ sub main
     my $deps = Convert::prereqs($name, $meta->{'prereqs'});
 
     my %pbvars =
-        ('pkgname' => $name,
-         'pkgver'  => $ver,
+        ('pkgver'  => $ver,
          'pkgdesc' => $meta->{'abstract'},
 
          'arch'       => (xsdist($dir) ? ['i686', 'x86_64'] : 'any'),

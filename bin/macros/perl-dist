@@ -547,7 +547,7 @@ sub md5sums
 sub sha512sums
 {
     return [ map {
-        my $sha = Digest::SHA->new()->addfile($_)->hexdigest;
+        my $sha = Digest::SHA->new(512)->addfile($_)->hexdigest;
     } @_ ]
 }
 

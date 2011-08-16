@@ -29,6 +29,7 @@ license=(PerlArtistic GPL)
 options=('!emptydirs')
 depends=({: depends :})
 makedepends=({: makedepends :})
+checkdepends=({: checkdepends :})
 url={: url :}
 source=({: source :})
 md5sums=({: md5sums :})

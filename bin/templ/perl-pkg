@@ -30,6 +30,7 @@ options=('!emptydirs')
 depends=({: depends :})
 makedepends=({: makedepends :})
 checkdepends=({: checkdepends :})
+conflicts=({: conflicts :})
 url={: url :}
 source=({: source :})
 md5sums=({: md5sums :})
@@ -87,7 +88,7 @@ sub expandvar
         $val->[0] =~ s/([\$\"\`])/\\$1/g;
         return qq{"$val->[0]"};
     }
-    elsif ($name =~ /depends$/) {
+    elsif ($name =~ /conflicts|depends$/) {
         my @deps = map { qq{'$_'} } @$val;
         return wrap(q{}, q{ } x (length($name) + 2), @deps);
     }

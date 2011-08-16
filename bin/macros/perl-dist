@@ -10,6 +10,35 @@ use LWP::UserAgent qw();
 use YAML::XS qw();
 use version qw();
 
+# Override a package's name to conform to packaging guidelines.
+# Copied entries from CPANPLUS::Dist::Pacman and alot more
+# from searching for packages with perl in their name in
+# [extra] and [community]
+my %OVERRIDE = map { split /[\s=]+/ } split /\s*\n+\s*/, <<'END_OVERRIDES';
+
+libwww-perl    = perl-libwww
+aceperl        = perl-ace
+mod_perl       = mod_perl
+
+glade-perl-two = perl-glade-two
+Gnome2-GConf   = gconf-perl
+Gtk2-GladeXML  = glade-perl
+Glib           = glib-perl
+Gnome2         = gnome-perl
+Gnome2-VFS     = gnome-vfs-perl
+Gnome2-Canvas  = gnomecanvas-perl
+Gnome2-GConf   = gconf-perl
+Gtk2           = gtk2-perl
+Cairo          = cairo-perl
+Pango          = pango-perl
+
+Perl-Critic    = perl-critic
+Perl-Tidy      = perl-tidy
+App-Ack        = ack
+TermReadKey    = perl-term-readkey
+
+END_OVERRIDES
+
 sub dist2pkg
 {
     my ($name, $ver) = @_;
@@ -20,6 +49,8 @@ sub dist2pkg
 sub dist_pkgname
 {
     my ($distname) = @_;
+
+    return $OVERRIDE{$distname} if exists $OVERRIDE{$distname};
 
     # Package names should be lowercase and consist of alphanumeric
     # characters only (and hyphens!)...
@@ -295,37 +326,6 @@ use Pod::Select qw(); # search POD for description
 
 use Digest::MD5 qw(); # for md5sums & sha512sums
 use Digest::SHA qw();
-
-# Override a package's name to conform to packaging guidelines.
-# Copied entries from CPANPLUS::Dist::Pacman and alot more
-# from searching for packages with perl in their name in
-# [extra] and [community]
-my $NAME_OVERRIDES =
-{ map { split /[\s=]+/ } split /\s*\n+\s*/, <<'END_OVERRIDES' };
-
-libwww-perl    = perl-libwww
-aceperl        = perl-ace
-mod_perl       = mod_perl
-
-glade-perl-two = perl-glade-two
-Gnome2-GConf   = gconf-perl
-Gtk2-GladeXML  = glade-perl
-Glib           = glib-perl
-Gnome2         = gnome-perl
-Gnome2-VFS     = gnome-vfs-perl
-Gnome2-Canvas  = gnomecanvas-perl
-Gnome2-GConf   = gconf-perl
-Gtk2           = gtk2-perl
-Cairo          = cairo-perl
-Pango          = pango-perl
-
-SDL_Perl       = sdl_perl
-Perl-Critic    = perl-critic
-Perl-Tidy      = perl-tidy
-App-Ack        = ack
-TermReadKey    = perl-term-readkey
-
-END_OVERRIDES
 
 sub main
 {

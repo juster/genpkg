@@ -18,24 +18,20 @@ $resp = $resp->content;
 my ($href) = $resp =~ m{\[<a href="([^"]+)">Download</a>\]}
     or die "$0: no download link found at $url\n";
 
-unless (-d 'src') {
-    mkdir 'src' or die "$0: mkdir src: $!"
-}
-
 my $file = $href;
 $file =~ s{\A.*/}{};
 $href = "http://search.cpan.org" . $href;
 
 STDERR->autoflush(1);
 print STDERR "Downloading $file... ";
-$resp = $ua->get($href, ':content_file' => "src/$file");
+$resp = $ua->get($href, ':content_file' => $file);
 die "$0: download of $file failed: ", $resp->status_line
     unless $resp->is_success;
 print STDERR "OK\n";
 
 print "+ url $url\n";
 print "+ source $href\n";
-system "perl-dist src/$file";
+system "perl-dist $file";
 if ($? != 0) {
    printf STDERR "$0: failed to run perl-dist%s\n", ($! ? " ($!)" : q{});
    exit 1;

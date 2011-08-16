@@ -286,7 +286,7 @@ sub _distofmod
 package main;
 
 use File::Basename qw(basename dirname);
-use File::Spec::Functions qw(catfile);
+use File::Spec::Functions qw(catfile catdir);
 use File::Find qw(find);
 
 use JSON::XS qw(decode_json); # parse META.{json,yml} files
@@ -334,6 +334,8 @@ sub main
     my $file = basename($distpath);
     my $info = distinfo($file);
 
+    $dir = catdir($dir, 'src');
+    prepsrcdir($dir, $file);
     chdir $dir or die "chdir $dir: $!";
     $dir = extractdist($file);
 
@@ -362,6 +364,20 @@ sub main
     printf "| perl-pkg %s\n", (-f "$dir/Build.PL" ? "MB" : "MM");
 
     printjam(\%pbvars);
+}
+
+sub prepsrcdir
+{
+    my ($srcdir, $distfile) = @_;
+
+    unless (-d $srcdir) {
+        mkdir $srcdir or die "mkdir $srcdir: $!";
+    }
+
+    symlink $distfile, catfile($srcdir, $distfile)
+        or die "symlink $distfile: $!";
+
+    return;
 }
 
 sub envvar

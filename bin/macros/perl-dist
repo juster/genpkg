@@ -334,9 +334,7 @@ sub main
     my $file = basename($distpath);
     my $info = distinfo($file);
 
-    $dir = catdir($dir, 'src');
-    prepsrcdir($dir, $file);
-    chdir $dir or die "chdir $dir: $!";
+    chsrcdir(catdir($dir, 'src'), $file);
     $dir = extractdist($file);
 
     my $meta = loadmeta($dir);
@@ -366,18 +364,18 @@ sub main
     printjam(\%pbvars);
 }
 
-sub prepsrcdir
+# Create the src/ directory and tarball symlink. Then chdir into it.
+
+sub chsrcdir
 {
     my ($srcdir, $distfile) = @_;
 
-    unless (-d $srcdir) {
-        mkdir $srcdir or die "mkdir $srcdir: $!";
-    }
-
-    symlink $distfile, catfile($srcdir, $distfile)
+    mkdir $srcdir or die "mkdir $srcdir: $!";
+    chdir $srcdir or die "chdir $srcdir: $!";
+    symlink catfile('..', $distfile), $distfile
         or die "symlink $distfile: $!";
 
-    return;
+    return $srcdir;
 }
 
 sub envvar

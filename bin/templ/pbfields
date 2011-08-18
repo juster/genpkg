@@ -13,7 +13,7 @@ BEGIN {
     }
 
     COLS = 78
-    FS = "\n"; RS = ""; OFS = "="; ORS = "\n";
+    FS = "\n"; RS = ""
 }
 
 NF < 2 { next }
@@ -34,6 +34,7 @@ arrfield[$1] {
 }
 
 END {
+    OFS = "="; ORS = "\n";
     for (i=1; i<=max; i++) {
         name = fields[i]
         if (name in output) print name, output[name]

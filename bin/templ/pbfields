@@ -20,7 +20,10 @@ $1 ~ /depends$|conflicts|provides/ {
     for (i=2; i<=NF; i++) $i = sprintf("'%s'", $i)
 }
 
-$1 == "pkgdesc" { gsub(/[$"`]/, "\\&", $2) }
+$1 == "pkgdesc" {
+    gsub(/[$"`]/, "\\&", $2)
+    $2 = sprintf("\"%s\"", $2)
+}
 
 strfield[$1] { output[$1] = $2 }
 

@@ -1,0 +1,2 @@
+! perl-cpan LWP-MediaTypes
++ conflicts perl-libwww<6

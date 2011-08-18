@@ -1,0 +1,2 @@
+! perl-cpan File-Listing
++ conflicts perl-libwww<6

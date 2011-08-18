@@ -1,0 +1,2 @@
+! perl-cpan HTTP-Cookies
++ conflicts perl-libwww<6

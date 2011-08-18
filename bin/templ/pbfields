@@ -16,6 +16,8 @@ BEGIN {
     FS = "\n"; RS = ""; OFS = "="; ORS = "\n";
 }
 
+NF < 2 { next }
+
 $1 ~ /depends$|conflicts|provides/ {
     for (i=2; i<=NF; i++) $i = sprintf("'%s'", $i)
 }

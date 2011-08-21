@@ -1,0 +1,5 @@
+! perl-cpan Mozilla-CA
+- license PerlArtistic
+- license GPL
++ license GPL2
++ license LGPL2.1

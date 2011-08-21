@@ -47,41 +47,39 @@ function parsepbj (  cmd)
     # Optdeps are special. In an annoying way.
     if ($1 == "+") {
         if ($2 == "optdepends") {
-            msg = $3
-            for (i=4; i<=NF; i++) msg = msg " " $i
+            msg = joinfields(3)
 
             ++optdepcount
             name = optdepname($3)
             optdeps[name] = msg
 
             remdep("depends", name)
-            remdep("makedeps", name)
+            remdep("makedepends", name)
+            remdep("checkdepends", name)
         }
         else {
             # We print the default packager if none was seen.
             if ($2 == "packager") seenpkgr = 1
 
-            val = $3
-            for (i=4; i<=NF; i++) val = val " " $i
+            val = joinfields(3)
             pbvars[$2, ++pbvars[$2,"len"]] = val
         }
     }
     else if ($1 == "-") {
         if ($2 == "optdepends")
             die("cannot delete an optdep once it is created.")
-        remdep($2, $3)
+        if (! remdep($2, $3)) {
+            die("could not find " prefix " in " name)
+        }
     }
     else if ($1 == "!") {
-        cmd = $2
-        for (i=3; i<=NF; i++) cmd = cmd " " $i
-
+        cmd = joinfields(2)
         while ((ret = cmd | getline) > 0) parsepbj()
         if (ret == -1) die("failed to run $cmd")
         close(cmd)
     }
     else if ($1 == "|") {
-        tcmd = $2
-        for (i=3; i<=NF; i++) tcmd = tcmd " " $i
+        tcmd = joinfields(2)
         templates[++templcount] = tcmd
     }
     else if ($1 == "") ; # ignore blank lines
@@ -96,24 +94,33 @@ function die (msg)
     exit 1
 }
 
+function joinfields (start, msg)
+{
+    msg = $(start++)
+    while (start <= NF) msg = msg " " $(start++)
+    return msg
+}
+
 function remdep (name, prefix)
 {
     len = pbvars[name, "len"]
-    if (len == 0) return
+    if (len == 0) return 0
 
     for (i=1; i<=len; i++)
         if (pbvars[name, i] ~ "^" prefix) break
 
-    if (i > len) die("could not find " prefix " in " name)
+    if (i > len) return 0
 
     while (i < len) { pbvars[name, i] = pbvars[name, i+1]; i++ }
     delete pbvars[name, i]
     pbvars[name, "len"]--
+
+    return 1
 }
 
 function optdepname (msgbeg)
 {
-    if (! match(msgbeg, "^[a-z_-]+:"))
-        die("failed to extract name from optdept")
+    if (! match(msgbeg, "^[a-z_-]+:$"))
+        die("bad optdepends name: " msgbeg)
     return substr(msgbeg, 1, RLENGTH-1)
 }

@@ -112,9 +112,10 @@ sub readvars
 
 sub main
 {
-    my $type = shift or die qq{$0: please provide "MM" or "MB" as argument\n};
+    my ($type) = @_;
     my $vars = readvars();
     printpb($type, $vars);
 }
 
-main(@_);
+my $type = shift or die qq{$0: please provide "MM" or "MB" as argument\n};
+main($type);

@@ -88,6 +88,7 @@ sub printpb
         print $pbfields "\n";
     }
     close $pbfields;
+    print qq{_distdir="\$srcdir/$pbvars->{'distdir'}[0]"\n};
     print "\n";
 
     for my $func (qw/build check package/) {

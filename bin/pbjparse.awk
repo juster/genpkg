@@ -32,7 +32,7 @@ END {
 
     if (optdepcount > 0) {
         print "optdepends" | tcmd
-        for (name in optdeps) print optdeps[name]
+        for (name in optdeps) print optdeps[name] | tcmd
         print "" | tcmd
     }
 

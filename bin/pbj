@@ -7,6 +7,33 @@ die() {
     exit 1
 }
 
+pbjtopkg()
+{
+    pkg=$1
+    rm -rf "$pkgroot/$pkg"
+    mkdir "$pkgroot/$pkg"
+    cd "$pkgroot/$pkg"
+
+    jamfile="$jamdir/$1.pbj"
+    if [ ! -f "$jamfile" ] ; then
+        die "$jamfile is missing"
+    fi
+
+    # Match the pkgname to the .pbj filename.
+    # Provide values for other things macros won't be able to.
+    printf "+ pkgname $pkg\n+ pkgrel ${PKGREL:-1}\n+ pbjver $VERSION\n" \
+        | cat - "$jamfile" \
+        | awk -v packager="${PACKAGER:-Anonymous}" -f "$bindir/pbjparse.awk" \
+        > PKGBUILD
+
+    if [ $? -ne 0 ] ; then
+        echo "Failed to write $pkgroot/$pkg/PKGBUILD"
+        exit $?
+    fi
+
+    echo "Wrote $pkgroot/$pkg/PKGBUILD."
+}
+
 if [ -z "$1" ] ; then
     die "Usage: $0 [package name]"
 fi
@@ -36,29 +63,9 @@ if [ ! -d "$jamdir" ] ; then
     die "$jamdir does not exist"
 fi
 
-jamfile="$jamdir/$1.pbj"
-if [ ! -f "$jamfile" ] ; then
-    die "$jamfile is missing"
-fi
-
-pkg=$1
-rm -rf "$pkgroot/$pkg"
-mkdir "$pkgroot/$pkg"
-cd "$pkgroot/$pkg"
-
 export PATH="$PATH:$bindir/macros:$bindir/templ"
 
-# Match the pkgname to the .pbj filename.
-# Provide values for other things macros won't be able to.
-printf "+ pkgname $pkg\n+ pkgrel ${PKGREL:-1}\n+ pbjver $VERSION\n" \
-    | cat - "$jamfile" \
-    | awk -v packager="$PACKAGER" -f "$bindir/pbjparse.awk" \
-    > PKGBUILD
-
-if [ $? -ne 0 ] ; then
-    echo "Failed to write $pkgroot/$pkg/PKGBUILD"
-    exit $?
-fi
-
-echo "Wrote $pkgroot/$pkg/PKGBUILD."
-exit 0
+while [ $# -gt 0 ] ; do
+    pbjtopkg $1
+    shift
+done

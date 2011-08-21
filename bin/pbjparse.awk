@@ -14,7 +14,7 @@ END {
     tcmd = ""
     if (templcount > 0) {
         tcmd = templates[1]
-        for (i=2; i<=templcount; i++) tcmd = "|" templates[i]
+        for (i=2; i<=templcount; i++) tcmd = tcmd "|" templates[i]
     }
     else tcmd = "cat"
         

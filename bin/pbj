@@ -21,7 +21,12 @@ if [ ! -d "$bindir" ] ; then
 fi
 PATH="$PATH:$bindir"
 
-pkgroot="$(pwd)/pkg"
+if [ -n "$PKGROOT" ] ; then
+    pkgroot="$PKGROOT"
+else
+    pkgroot="$(pwd)/pkg"
+fi
+
 if [ ! -d "$pkgroot" ] ; then
     die "$pkgroot does not exist"
 fi

@@ -423,6 +423,9 @@ sub printjam
         }
         print "+ $name $_\n" for (ref $val ? @$val : $val);
     }
+
+    # TODO: autodetect license type
+    print "+ license $_\n" for (qw/PerlArtistic GPL/);
 }
 
 sub loadmeta

@@ -1,12 +1,12 @@
 #!/usr/bin/awk -f
 
 BEGIN {
-    fieldstr = "pkgname pkgver pkgrel pkgdesc epoch "                   \
-        "*arch *license *options "                                      \
-        "install changelog "                                            \
-        "*depends *makedepends *checkdepends *optdepends "              \
-        "*conflicts *provides "                                         \
-        "url *source *noextract *md5sums *sha512sums "
+    fieldstr = "pkgname pkgver pkgrel pkgdesc epoch"                    \
+        " *arch *license *options"                                      \
+        " install changelog"                                            \
+        " *depends *makedepends *checkdepends *optdepends"              \
+        " *conflicts *provides"                                         \
+        " url *source *noextract *md5sums *sha512sums"
     max = split(fieldstr, fields)
     for (i=1; i<=max; i++) {
         if (sub(/^[*]/, "", fields[i])) arrfield[fields[i]] = 1;

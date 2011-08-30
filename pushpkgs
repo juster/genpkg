@@ -1,0 +1,25 @@
+#!/bin/sh
+
+if [ -z "$DEST" ] ; then
+    echo "Specify the destination directory with the DEST env var." 1>&2
+    exit 1
+fi
+
+cd pkg || exit 1
+
+while [ $# -gt 0 ] ; do
+    pkg=$1 ; shift
+    if [ ! -d "$pkg" ] ; then
+        echo "pkg/$pkg was not found." 1>&2
+        continue
+    fi
+
+    echo "$DEST/$pkg"
+    if [ -d "$DEST/$pkg" ] ; then
+        rm -rf "$DEST/$pkg/trunk/"*
+    fi
+
+    mkdir -p "$DEST/$pkg/"{trunk,repos}
+    cp -r -t "$DEST/$pkg/trunk" "$pkg"/* 
+done
+

@@ -79,6 +79,10 @@ sub printpb
     printf $PBBEG, $pkger, $pbvars->{'pbjver'}[0];
     print "\n";
 
+    # Replace version string in first 'source' entry with $pkgver parameter.
+    my $ver = $pbvars->{'pkgver'}[0];
+    s/\Q$ver\E/\${pkgver}/g for $pbvars->{'source'}[0];
+
     # 'pbfields' will recognize and PKGBUILD fields in the data
     # and print them out in order, wordwrapping arrays.
     open my $pbfields, '|pbfields' or die "failed to pipe to pbfields: $!";
@@ -88,7 +92,11 @@ sub printpb
         print $pbfields "\n";
     }
     close $pbfields;
-    print qq{_distdir="\$srcdir/$pbvars->{'distdir'}[0]"\n};
+
+    # Replace version string in _distdir with $pkgver parameter.
+    my $distdir = $pbvars->{'distdir'}[0];
+    $distdir =~ s/\Q$ver\E/\${pkgver}/;
+    print qq{_distdir="\${srcdir}/$distdir"\n};
     print "\n";
 
     for my $func (qw/build check package/) {

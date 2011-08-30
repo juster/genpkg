@@ -69,6 +69,19 @@ sub bashify
     return $txt
 }
 
+sub mungevars
+{
+    my ($vars) = @_;
+    $vars->{'options'} = [ '!emptydirs' ];
+
+    # Replace version string in 'source' entry & 'distdir' with
+    # $pkgver parameter.
+    my $ver = $vars->{'pkgver'}[0];
+    s/\Q$ver\E/\${pkgver}/g for ($vars->{'source'}[0], $vars->{'distdir'}[0]);
+
+    return;
+}
+
 sub printpb
 {
     my ($btype, $pbvars) = @_;
@@ -78,10 +91,6 @@ sub printpb
     my $pkger = $pbvars->{'packager'}[0] || 'Anonymous';
     printf $PBBEG, $pkger, $pbvars->{'pbjver'}[0];
     print "\n";
-
-    # Replace version string in first 'source' entry with $pkgver parameter.
-    my $ver = $pbvars->{'pkgver'}[0];
-    s/\Q$ver\E/\${pkgver}/g for $pbvars->{'source'}[0];
 
     # 'pbfields' will recognize and PKGBUILD fields in the data
     # and print them out in order, wordwrapping arrays.
@@ -93,9 +102,7 @@ sub printpb
     }
     close $pbfields;
 
-    # Replace version string in _distdir with $pkgver parameter.
     my $distdir = $pbvars->{'distdir'}[0];
-    $distdir =~ s/\Q$ver\E/\${pkgver}/;
     print qq{_distdir="\${srcdir}/$distdir"\n};
     print "\n";
 
@@ -122,6 +129,7 @@ sub main
 {
     my ($type) = @_;
     my $vars = readvars();
+    mungevars($vars);
     printpb($type, $vars);
 }
 

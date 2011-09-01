@@ -17,16 +17,13 @@ END {
         for (i=2; i<=templcount; i++) tcmd = tcmd "|" templates[i]
     }
     else tcmd = "cat"
-        
-    for (dblkey in pbvars) {
-        split(dblkey, keys, SUBSEP)
-        if (keys[2] != "len") continue
 
-        name = keys[1]
-        len  = pbvars[dblkey]
+    for (name in pbcount) {
+        len = pbcount[name]
+        if (len == 0) continue
 
         print name | tcmd
-        for (i=1; i<=len; i++) print pbvars[name,i] | tcmd
+        for (i=1; i<=len; i++) print pbvars[name, i] | tcmd
         print "" | tcmd
     }
 
@@ -102,18 +99,18 @@ function joinfields (start, msg)
 
 function remall (field)
 {
-    pbvars[field, "len"] = 0
+    pbcount[field] = 0
 }
 
 function pushval (field, val)
 {
     if (field == "packager") seenpkgr = 1
-    pbvars[$2, ++pbvars[field, "len"]] = val
+    pbvars[field, ++pbcount[field]] = val
 }
 
-function remval (field, prefix)
+function remval (field, prefix,  i, len)
 {
-    len = pbvars[field, "len"]
+    len = pbcount[field]
     if (len == 0) return 0
 
     for (i=1; i<=len; i++)
@@ -121,9 +118,9 @@ function remval (field, prefix)
 
     if (i > len) return 0
 
-    while (i < len) { pbvars[field, i] = pbvars[field, i+1]; i++ }
+    for ( ; i < len; i++) pbvars[field, i] = pbvars[field, i+1]
     delete pbvars[field, i]
-    pbvars[field, "len"]--
+    pbcount[field]--
 
     return 1
 }

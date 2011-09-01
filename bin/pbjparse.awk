@@ -59,24 +59,19 @@ function parsepbj (  cmd) # cmd is a "local" var
         }
         else {
             # We print the default packager if none was seen.
-            if ($2 == "packager") seenpkgr = 1
-
-            val = joinfields(3)
-            pbvars[$2, ++pbvars[$2,"len"]] = val
+            pushval($2, joinfields(3))
         }
     }
     else if ($1 == "-") {
         if ($2 == "optdepends")
             die("cannot delete an optdep once it is created.")
-        if (! remdep($2, $3)) {
-            die("could not find " prefix " in " name)
-        }
+        if (! remval($2, $3))
+            die("could not find " $3 " in " $2 "'s values")
     }
     else if ($1 == "=") {
         if ($2 == "optdepends") die("cannot use '=' with optdepends.")
-        if ($2 == "packager") seenpkgr = 1
-        for (i=3; i<=NF; i++) pbvars[$2, i-2] = $i
-        pbvars[$2, "len"] = NF-2
+        remall($2)
+        for (i=3; i<=NF; i++) pushval($2, $i)
     }
     else if ($1 == "!") {
         cmd = joinfields(2)
@@ -107,19 +102,30 @@ function joinfields (start, msg)
     return msg
 }
 
-function remdep (name, prefix)
+function remall (field)
 {
-    len = pbvars[name, "len"]
+    pbvars[field, "len"] = 0
+}
+
+function pushval (field, val)
+{
+    if (field == "packager") seenpkgr = 1
+    pbvars[$2, ++pbvars[field, "len"]] = val
+}
+
+function remval (field, prefix)
+{
+    len = pbvars[field, "len"]
     if (len == 0) return 0
 
     for (i=1; i<=len; i++)
-        if (pbvars[name, i] ~ "^" prefix) break
+        if (pbvars[field, i] ~ "^" prefix) break
 
     if (i > len) return 0
 
-    while (i < len) { pbvars[name, i] = pbvars[name, i+1]; i++ }
-    delete pbvars[name, i]
-    pbvars[name, "len"]--
+    while (i < len) { pbvars[field, i] = pbvars[field, i+1]; i++ }
+    delete pbvars[field, i]
+    pbvars[field, "len"]--
 
     return 1
 }

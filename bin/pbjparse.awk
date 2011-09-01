@@ -72,6 +72,12 @@ function parsepbj (  cmd) # cmd is a "local" var
             die("could not find " prefix " in " name)
         }
     }
+    else if ($1 == "=") {
+        if ($2 == "optdepends") die("cannot use '=' with optdepends.")
+        if ($2 == "packager") seenpkgr = 1
+        for (i=3; i<=NF; i++) pbvars[$2, i-2] = $i
+        pbvars[$2, "len"] = NF-2
+    }
     else if ($1 == "!") {
         cmd = joinfields(2)
         while ((ret = cmd | getline) > 0) parsepbj()

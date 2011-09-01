@@ -18,12 +18,12 @@ END {
     }
     else tcmd = "cat"
         
-    for (key in pbvars) {
-        split(key, keys, SUBSEP)
-
+    for (dblkey in pbvars) {
+        split(dblkey, keys, SUBSEP)
         if (keys[2] != "len") continue
+
         name = keys[1]
-        len  = pbvars[key]
+        len  = pbvars[dblkey]
 
         print name | tcmd
         for (i=1; i<=len; i++) print pbvars[name,i] | tcmd

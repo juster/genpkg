@@ -39,7 +39,7 @@ END {
     if (!seenpkgr) print "packager\n" packager "\n\n" | tcmd
 }
 
-function parsepbj (  cmd)
+function parsepbj (  cmd) # cmd is a "local" var
 {
     # Ignore comments.
     sub(/#.*/, "")

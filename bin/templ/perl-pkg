@@ -76,6 +76,9 @@ sub mungevars
 
     # Replace version string in 'source' entry & 'distdir' with
     # $pkgver parameter.
+    for my $v (qw/pkgver distdir/) {
+        die "$0: $v is undefined" unless defined $vars->{$v}[0];
+    }
     my $ver = $vars->{'pkgver'}[0];
     s/\Q$ver\E/\${pkgver}/g for ($vars->{'source'}[0], $vars->{'distdir'}[0]);
 

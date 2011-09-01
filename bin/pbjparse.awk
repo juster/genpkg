@@ -83,15 +83,13 @@ function parsepbj (  cmd) # cmd is a "local" var
         tcmd = joinfields(2)
         templates[++templcount] = tcmd
     }
-    else if ($1 == "") ; # ignore blank lines
-    else {
-        print "ignoring line " FNR ": " $0 | "cat 1>&2"
-    }
+    else if ($1 ~ /^[ \t]*$/) ; # ignore lines of whitespace
+    else die("invalid input: " $0)
 }
 
 function die (msg)
 {
-    printf "%s:%s.%d:%s\n", PROG, FILENAME, FNR, msg | "cat 1>&2"
+    printf "%s: error: %s:%d %s\n", PROG, FILENAME, FNR, msg | "cat 1>&2"
     exit 1
 }
 

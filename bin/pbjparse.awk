@@ -76,8 +76,7 @@ function parsepbj (  cmd) # cmd is a "local" var
         close(cmd)
     }
     else if ($1 == "|") {
-        tcmd = joinfields(2)
-        templates[++templcount] = tcmd
+        templates[++templcount] = joinfields(2)
     }
     else if ($1 ~ /^[ \t]*$/) ; # ignore lines of whitespace
     else die("invalid input: " $0)

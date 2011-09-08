@@ -1,5 +1,4 @@
 #!/usr/bin/awk -f
-##
 # Add an SVN $Id$ comment at the end of the comments header
 /^#/ { aftercom = 1 }
 !/^#/ && aftercom && ! done { print "# $Id$"; done = 1 }

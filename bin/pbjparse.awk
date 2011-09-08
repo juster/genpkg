@@ -32,7 +32,11 @@ END {
         print "" | tcmd
     }
 
-    if (!seenpkgr) print "packager\n" packager "\n\n" | tcmd
+    if (!seenpkgr) {
+        pkger = ENVIRON["PACKAGER"]
+        if (pkger == "") pkger = "Anonymous"
+        print "packager\n" pkger | tcmd
+    }
 }
 
 function parsepbj (  cmd) # cmd is a "local" var

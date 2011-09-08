@@ -72,7 +72,7 @@ function parsepbj (  cmd) # cmd is a "local" var
     else if ($1 == "!") {
         cmd = joinfields(2)
         while ((ret = cmd | getline) > 0) parsepbj()
-        if (ret == -1) die("failed to run $cmd")
+        if (ret == -1) die("failed to run " cmd)
         close(cmd)
     }
     else if ($1 == "|") {

@@ -23,7 +23,7 @@ pbjtopkg()
     # Provide values for other things macros won't be able to.
     printf "+ pkgname $pkg\n+ pkgrel ${PKGREL:-1}\n+ pbjver $VERSION\n" \
         | cat - "$jamfile" \
-        | awk -v packager="${PACKAGER:-Anonymous}" -f "$bindir/pbjparse.awk" \
+        | awk -f "$bindir/pbjparse.awk" \
         > PKGBUILD
 
     if [ $? -ne 0 ] ; then

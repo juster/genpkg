@@ -19,13 +19,7 @@ BEGIN {
 
 NF < 2 { next }
 
-$1 ~ /depends$|conflicts|provides/ {
-    for (i=2; i<=NF; i++) $i = sprintf("'%s'", $i)
-}
-
-$1 == "source" {
-    for (i=2; i<=NF; i++) $i = sprintf("\"%s\"", $i)
-}
+$1 ~ /depends$|conflicts|provides|source/ { quotevals() }
 
 $1 == "pkgdesc" {
     gsub(/[$"`]/, "\\\\&", $2)
@@ -76,4 +70,15 @@ function wraparray (indent)
     txt = txt ")"
 
     return txt
+}
+
+function quotevals ()
+{
+    for (i=2; i<=NF; i++) $i = bashquote($i)
+}
+
+function bashquote (val)
+{
+    if (val ~ /\$/) return sprintf("\"%s\"", val)
+    return sprintf("'%s'", val)
 }

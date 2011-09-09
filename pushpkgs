@@ -21,5 +21,13 @@ while [ $# -gt 0 ] ; do
 
     mkdir -p "$DEST/$pkg/"{trunk,repos}
     cp -r -t "$DEST/$pkg/trunk" "$pkg"/* 
-done
 
+    # Add an SVN $Id$ comment at the end of the comments header
+    cd "$DEST/$pkg/trunk"
+    awk '!/^#/ && ! done { print "# $Id$"; done = 1 } 1' PKGBUILD \
+        > PKGBUILD.new
+    mv PKGBUILD.new PKGBUILD
+
+    # Make sure it is used.
+    svn propset svn:keywords Id PKGBUILD
+done

@@ -1,3 +1,2 @@
 ! perl-cpan libwww-perl
 + optdepends perl-lwp-protocol-https: for https:// url schemes
-| addsvnid

@@ -1,3 +1,2 @@
 ! perl-cpan HTML-Form
-| addsvnid
 + conflicts perl-libwww<6

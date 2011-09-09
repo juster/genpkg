@@ -324,7 +324,7 @@ use Digest::SHA qw();
 
 sub main
 {
-    my $distpath = shift or die "Usage: $0 [path to cpan dist file]\n";
+    my $distpath = shift or die "Usage: perl-dist [path to cpan dist file]\n";
     my $dir  = dirname($distpath);
     my $file = basename($distpath);
     my $info = distinfo($file);
@@ -396,15 +396,15 @@ sub extractdist
     my ($file) = @_;
 
     system "bsdtar -xf $file";
-    die "$0: bsdtar failed to extract $file\n" unless $? == 0;
+    die "perl-dist: bsdtar failed to extract $file\n" unless $? == 0;
 
     opendir my $srcdir, '.' or die "opendir: $!";
     my @dirs = grep { -d $_ && !/\A[.]/ } readdir $srcdir;
     closedir $srcdir;
 
-    die "$0: many dirs (@dirs) inside the tarball $file\n"
+    die "perl-dist: many dirs (@dirs) inside the tarball $file\n"
         if @dirs > 1;
-    die "$0: no dirs found in tarball $file\n" if @dirs == 0;
+    die "perl-dist: no dirs found in tarball $file\n" if @dirs == 0;
     return $dirs[0];
 }
 
@@ -413,7 +413,7 @@ sub printjam
     my ($pbvars) = @_;
     while (my ($name, $val) = each %$pbvars) {
         if (! defined $val || $val eq q{}) {
-            warn "$0: warning: $name is undefined\n";
+            warn "perl-dist: warning: $name is undefined\n";
             $val = q{};
         }
         print "+ $name $_\n" for (ref $val ? @$val : $val);

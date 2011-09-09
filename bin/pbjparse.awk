@@ -52,10 +52,6 @@ function parsepbj (  cmd) # cmd is a "local" var
             ++optdepcount
             name = optdepname($3)
             optdeps[name] = msg
-
-            remdep("depends", name)
-            remdep("makedepends", name)
-            remdep("checkdepends", name)
         }
         else {
             # We print the default packager if none was seen.

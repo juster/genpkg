@@ -1,0 +1,6 @@
+! perl-cpan App-perlbrew
++ provides perl-app-perlbrew=${pkgver}
+< makedepends perl-io-all
+> checkdepends
+< makedepends perl-path-class
+> checkdepends

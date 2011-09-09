@@ -142,15 +142,10 @@ sub _yankcheckers
     my ($deps_ref) = @_;
     my %checkdeps;
 
-    for my $testdep (grep { /perl-test-/ } keys %$deps_ref) {
+    for my $testdep (grep { /^perl-pod-coverage$|perl-test-/ }
+                     keys %$deps_ref) {
         my $val = delete $deps_ref->{$testdep};
-        $checkdeps{$testdep} = $val if $val;
-    }
-
-    # Also extract Pod::Coverage module into checkdepends
-    for my $dep ( qw/ perl-pod-coverage / ) {
-        my $val = delete $deps_ref->{$dep};
-        $checkdeps{$dep} = $val if $val;
+        $checkdeps{$testdep} = $val if defined $val;
     }
 
     return \%checkdeps;
@@ -256,7 +251,7 @@ sub prereqs
     # need for checking (aka "testing"). Older perl METAs do not
     # have this separated. Force any test modules to be checkdepends.
     if (! $pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/) {
-        my $checkdeps;
+        my $checkdeps = {};
         my $makedeps = $pkgdeps{'makedepends'};
         _merge($checkdeps, _yankcheckers($makedeps));
         $pkgdeps{'checkdepends'} = $checkdeps;

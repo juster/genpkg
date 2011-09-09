@@ -492,7 +492,7 @@ sub _poddesc
     # nested directories. Then search desperately for a .pm file that
     # matches the module's last name component.
 
-    my @possible = glob "$dir/{lib/,}{moddir/,}$modfile.{pod,pm}";
+    my @possible = glob "$dir/{lib/,}{$moddir/,}$modfile.{pod,pm}";
 
     PODSEARCH:
     for my $podpath ( @possible ) {
@@ -515,10 +515,7 @@ sub _poddesc
         $namesect =~ s{ [IBCLEFSXZ] <<(.*?)>> }{$1}gxms;
 
         # The short desc is on a line beginning with 'Module::Name - '
-        if ( $namesect =~ / ^ \s* $modname [ -]+ ([^\n]+) /xms ) {
-            print STDERR qq{Found description "$1" in POD};
-            return $1;
-        }
+        return $1 if $namesect =~ / ^ \s* $modname [ -]+ ([^\n]+) /xms;
     }
 
     return undef;

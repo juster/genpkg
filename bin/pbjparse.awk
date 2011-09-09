@@ -61,8 +61,17 @@ function parsepbj (  cmd) # cmd is a "local" var
     else if ($1 == "-") {
         if ($2 == "optdepends")
             die("cannot delete an optdep once it is created.")
-        if (! remval($2, $3))
-            die("could not find " $3 " in " $2 "'s values")
+        remval($2, $3)
+    }
+    else if ($1 == "<") {
+        i = findval($2, $3)
+        stack[++stacklen] = pbvars[$2, i]
+        remelem($2, i)
+    }
+    else if ($1 == ">") {
+        if (stacklen < 1)
+            die("No values on the stack. Make sure you used '<' first.")
+        pushval($2, stack[stacklen--])
     }
     else if ($1 == "=") {
         if ($2 == "optdepends") die("cannot use '=' with optdepends.")
@@ -84,7 +93,7 @@ function parsepbj (  cmd) # cmd is a "local" var
 
 function die (msg)
 {
-    printf "%s: error: %s:%d %s\n", PROG, FILENAME, FNR, msg | "cat 1>&2"
+    printf "%s: error line %d: %s\n", PROG, FNR, msg | "cat 1>&2"
     exit 1
 }
 
@@ -106,21 +115,29 @@ function pushval (field, val)
     pbvars[field, ++pbcount[field]] = val
 }
 
-function remval (field, prefix,  i, len)
+function remval (field, prefix)
 {
+    remelem(field, findval(field, prefix))
+}
+
+function remelem (field, i,  len)
+{
+    # TODO: error check if "i" is in bounds?
     len = pbcount[field]
-    if (len == 0) return 0
-
-    for (i=1; i<=len; i++)
-        if (pbvars[field, i] ~ "^" prefix) break
-
-    if (i > len) return 0
-
-    for ( ; i < len; i++) pbvars[field, i] = pbvars[field, i+1]
+    for (len = pbcount[field]; i < len; i++)
+        pbvars[field, i] = pbvars[field, i+1]
     delete pbvars[field, i]
     pbcount[field]--
+}
 
-    return 1
+function findval (field, prefix,  i, len)
+{
+    len = pbcount[field]
+    if (len == 0) die(field " is empty!")
+
+    for (i=1; i<=len; i++) if (pbvars[field, i] ~ "^" prefix) break
+    if (i > len) die("could not find " prefix " in " field "'s values")
+    return i
 }
 
 function optdepname (msgbeg)

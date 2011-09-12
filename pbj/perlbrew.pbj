@@ -4,3 +4,4 @@
 > checkdepends
 < makedepends perl-path-class
 > checkdepends
+= license MIT

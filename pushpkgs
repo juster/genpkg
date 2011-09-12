@@ -1,11 +1,28 @@
 #!/bin/sh
 
+prependid()
+{
+    awk '!/^#/ && ! done { print "# $Id$"; done = 1 } 1' PKGBUILD \
+        > PKGBUILD.new
+    mv PKGBUILD.new PKGBUILD
+}
+
+# Make sure that the package directories are added to the SVN repo.
+syncsvn()
+{
+    svn add --parents PKGBUILD ../repos
+    # Make sure that the Id keyword-property is active.
+    svn propset svn:keywords Id PKGBUILD
+}
+
+
 if [ -z "$DEST" ] ; then
     echo "Specify the destination directory with the DEST env var." 1>&2
     exit 1
 fi
 
 cd pkg || exit 1
+pkgdir=$(pwd)
 
 while [ $# -gt 0 ] ; do
     pkg=$1 ; shift
@@ -22,12 +39,9 @@ while [ $# -gt 0 ] ; do
     mkdir -p "$DEST/$pkg/"{trunk,repos}
     cp -r -t "$DEST/$pkg/trunk" "$pkg"/* 
 
-    # Add an SVN $Id$ comment at the end of the comments header
     cd "$DEST/$pkg/trunk"
-    awk '!/^#/ && ! done { print "# $Id$"; done = 1 } 1' PKGBUILD \
-        > PKGBUILD.new
-    mv PKGBUILD.new PKGBUILD
+    prependid
+    syncsvn >/dev/null 2>&1
 
-    # Make sure it is used.
-    svn propset svn:keywords Id PKGBUILD
+    cd "$pkgdir"
 done

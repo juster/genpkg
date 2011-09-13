@@ -1,0 +1,21 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+    cat 1>&2 <<EOF
+Usage: addln [PKGBUILD function] [line of bash]
+
+Reads the PKGBUILD from standard input, adding a line at the end of the
+specified bash function. The line can be empty to just add a newline.
+EOF
+    exit 1
+fi
+
+fname=$1
+shift
+
+awk -v fname="$fname" -v line="$*" '
+match($0, "^[ \\t]*" fname "\\(\\)") { active = 1 }
+active && match($0, /^[ ]+/) { indent = substr($0, 1, RLENGTH) }
+active && /^}/ { active = 0; print indent "" line }
+1
+'

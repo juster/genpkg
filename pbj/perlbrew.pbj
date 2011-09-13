@@ -4,4 +4,7 @@
 > checkdepends
 < makedepends perl-path-class
 > checkdepends
-= license MIT
+= license custom:MIT
+| addln package
+| addln package 'mkdir -p "$pkgdir/usr/share/licenses/perlbrew"'
+| addln package 'cp LICENSE "$pkgdir/usr/share/licenses/perlbrew/LICENSE"'

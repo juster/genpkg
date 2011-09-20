@@ -31,8 +31,4 @@ print STDERR "OK\n";
 
 print "+ url $url\n";
 print "+ source $href\n";
-system "perl-dist $file";
-if ($? != 0) {
-   printf STDERR "$0: failed to run perl-dist%s\n", ($! ? " ($!)" : q{});
-   exit 1;
-}
+print "! perl-dist $file\n";

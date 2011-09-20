@@ -1,94 +1,68 @@
 # pbjparse.awk
 ##
-# Parse a PBJ data file and print a PBDATA datafile to STDOUT.
+# Parse a .pbj data file and print a PKGMETA data file to stdout.
 # Justin Davis <jrcd83@gmail.com>
 
-BEGIN {
-    templcount = 0 # number of templates that will be in the templates array
-    PROG = "pbjparse"
+BEGIN { PROG = "pbjparse" }
+
+{ sub(/#.*/, "") }
+
+$1 == "+" { pushval($2, joinfields(3)); next }
+
+$1 == "-" { remval($2, $3); next }
+
+$1 == "<" {
+    i = findval($2, $3)
+    stack[++stacklen] = pbvars[$2, i]
+    remelem($2, i)
+    next
 }
 
-{ parsepbj() }
+$1 == ">" {
+    if (stacklen < 1)
+        die("No values on the stack. Make sure you use '<' first.")
+    pushval($2, stack[stacklen--])
+    next
+}
+
+$1 == "=" {
+    if ($2 == "optdepends") die("cannot use '=' with optdepends.")
+    remall($2)
+    for (i=3; i<=NF; i++) pushval($2, $i)
+    next
+}
+
+$1 == "!" {
+    cmd = joinfields(2)
+    while ((ret = cmd | getline) > 0) parsepbj()
+    if (ret == -1) die("failed to run " cmd)
+    close(cmd)
+    next
+}
+
+$1 == "|" { pbpipes[++pipecount] = joinfields(2); next }
+
+# ignore lines of whitespace
+$1 !~ /^[ \t]*$/ { die("invalid input: " $0) }
 
 END {
-    if (templcount > 0) {
-        tcmd = templates[1]
-        for (i=2; i<=templcount; i++) tcmd = tcmd "|" templates[i]
-    }
-    else tcmd = "cat"
+    OFS = "\n"
+    writemakepb()
 
     for (name in pbcount) {
         len = pbcount[name]
         if (len == 0) continue
 
-        print name | tcmd
-        for (i=1; i<=len; i++) print pbvars[name, i] | tcmd
-        print "" | tcmd
-    }
-
-    if (optdepcount > 0) {
-        print "optdepends" | tcmd
-        for (name in optdeps) print optdeps[name] | tcmd
-        print "" | tcmd
+        print name
+        for (i=1; i<=len; i++) print pbvars[name, i]
+        print ""
     }
 
     if (!seenpkgr) {
         pkger = ENVIRON["PACKAGER"]
         if (pkger == "") pkger = "Anonymous"
-        print "packager\n" pkger | tcmd
+        print "packager\n" pkger
     }
-}
-
-function parsepbj (  cmd) # cmd is a "local" var
-{
-    # Ignore comments.
-    sub(/#.*/, "")
-
-    # Optdeps are special. In an annoying way.
-    if ($1 == "+") {
-        if ($2 == "optdepends") {
-            msg = joinfields(3)
-
-            ++optdepcount
-            name = optdepname($3)
-            optdeps[name] = msg
-        }
-        else {
-            # We print the default packager if none was seen.
-            pushval($2, joinfields(3))
-        }
-    }
-    else if ($1 == "-") {
-        if ($2 == "optdepends")
-            die("cannot delete an optdep once it is created.")
-        remval($2, $3)
-    }
-    else if ($1 == "<") {
-        i = findval($2, $3)
-        stack[++stacklen] = pbvars[$2, i]
-        remelem($2, i)
-    }
-    else if ($1 == ">") {
-        if (stacklen < 1)
-            die("No values on the stack. Make sure you used '<' first.")
-        pushval($2, stack[stacklen--])
-    }
-    else if ($1 == "=") {
-        if ($2 == "optdepends") die("cannot use '=' with optdepends.")
-        remall($2)
-        for (i=3; i<=NF; i++) pushval($2, $i)
-    }
-    else if ($1 == "!") {
-        cmd = joinfields(2)
-        while ((ret = cmd | getline) > 0) parsepbj()
-        if (ret == -1) die("failed to run " cmd)
-        close(cmd)
-    }
-    else if ($1 == "|") {
-        templates[++templcount] = joinfields(2)
-    }
-    else if ($1 ~ /^[ \t]*$/) ; # ignore lines of whitespace
-    else die("invalid input: " $0)
 }
 
 function die (msg)
@@ -140,9 +114,13 @@ function findval (field, prefix,  i, len)
     return i
 }
 
-function optdepname (msgbeg)
+function writemakepb ()
 {
-    if (! match(msgbeg, "^[a-z_-]+:$"))
-        die("bad optdepends name: " msgbeg)
-    return substr(msgbeg, 1, RLENGTH-1)
+    tcmd = pbpipes[1]
+    for (i = 2; i <= pipecount; i++) tcmd = tcmd " | \\\n    " pbpipes[i]
+    print "#!/bin/sh" > "makepb"
+    print "PATH=" ENVIRON["PATH"] > "makepb"
+    print "cat PKGMETA | " tcmd > "makepb"
+    close("makepb")
+    system("chmod +x makepb")
 }

@@ -3,7 +3,7 @@
 VERSION=0.01
 
 die() {
-    echo "error: $1"
+    echo "error: $*"
     exit 1
 }
 
@@ -15,7 +15,8 @@ pbjtopkg()
     cd "$pkgroot/$pkg"
 
     jamfile="$jamdir/$1.pbj"
-    if [ ! -f "$jamfile" ] ; then
+    if [ ! -f "$jamfile" ]
+    then
         die "$jamfile is missing"
     fi
 
@@ -23,49 +24,39 @@ pbjtopkg()
     # Provide values for other things macros won't be able to.
     printf "+ pkgname $pkg\n+ pkgrel ${PKGREL:-1}\n+ pbjver $VERSION\n" \
         | cat - "$jamfile" \
+        | pbjexpand \
         | awk -f "$bindir/pbjparse.awk" \
-        > PKGBUILD
+        > PKGMETA
 
-    if [ $? -ne 0 ] ; then
-        echo "Failed to write $pkgroot/$pkg/PKGBUILD"
-        exit $?
+    if [ $? -ne 0 ]
+    then
+        die "Failed to write $pkgroot/$pkg/PKGMETA"
     fi
 
-    echo "Wrote $pkgroot/$pkg/PKGBUILD."
+    # pbjparse.awk also creates a makepb script in our cwd.
+    if ! ./makepb >PKGBUILD
+    then
+        die "makepb failed, error code $?"
+    fi
+
+    echo "$pkgroot/$pkg/PKGBUILD"
 }
 
-if [ -z "$1" ] ; then
-    die "Usage: $0 [package name]"
-fi
-
-if [ "$PBJROOT" ] ; then
-    cd "$PBJROOT"
-fi
+if [ -z "$1" ]; then die "Usage: $0 [package name]"; fi
+if [ "$PBJROOT" ]; then cd "$PBJROOT"; fi
 
 bindir="$(pwd)/bin"
-if [ ! -d "$bindir" ] ; then
-    die "$bindir does not exist"
-fi
+if [ ! -d "$bindir" ]; then die "$bindir does not exist"; fi
 PATH="$PATH:$bindir"
 
-if [ -n "$PKGROOT" ] ; then
-    pkgroot="$PKGROOT"
-else
-    pkgroot="$(pwd)/pkg"
+if [ -n "$PKGROOT" ]; then pkgroot="$PKGROOT"
+else pkgroot="$(pwd)/pkg"
 fi
 
-if [ ! -d "$pkgroot" ] ; then
-    die "$pkgroot does not exist"
-fi
+if [ ! -d "$pkgroot" ]; then die "$pkgroot does not exist"; fi
 
 jamdir="$(pwd)/pbj"
-if [ ! -d "$jamdir" ] ; then
-    die "$jamdir does not exist"
-fi
+if [ ! -d "$jamdir" ]; then die "$jamdir does not exist"; fi
 
 export PATH="$PATH:$bindir/macros:$bindir/templ"
-
-while [ $# -gt 0 ] ; do
-    pbjtopkg $1
-    shift
-done
+for pbj; do pbjtopkg "$pbj"; done

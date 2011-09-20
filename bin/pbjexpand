@@ -1,0 +1,19 @@
+#!/bin/sh
+
+cat $1 | while read op arg
+do
+    case "$op" in
+    '!')
+        expdepth=$((expdepth + 1))
+        if [ "$expdepth" -gt 10 ]
+        then
+            echo 'pbjexpand: depth of 10 recursive macros, aborting.' 1>&2
+            exit 1
+        fi
+
+        export expdepth
+        $arg | $0 ;;
+    *)
+        echo $op $arg
+    esac
+done

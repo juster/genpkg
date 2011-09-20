@@ -353,9 +353,9 @@ sub main
          );
 
     # Since this is a perl distribution, use the perl-pkg template.
-    printf "| perl-pkg %s\n", (-f "$dir/Build.PL" ? "MB" : "MM");
+    printf "template\nperl-pkg %s\n\n", (-f "$dir/Build.PL" ? "MB" : "MM");
 
-    printjam(\%pbvars);
+    printmeta(\%pbvars);
 }
 
 # Create the src/ directory and tarball symlink. Then chdir into it.
@@ -408,7 +408,7 @@ sub extractdist
     return $dirs[0];
 }
 
-sub printjam
+sub printmeta
 {
     my ($pbvars) = @_;
     while (my ($name, $val) = each %$pbvars) {
@@ -416,11 +416,13 @@ sub printjam
             warn "perl-dist: warning: $name is undefined\n";
             $val = q{};
         }
-        print "+ $name $_\n" for (ref $val ? @$val : $val);
+        print $name, "\n";
+        print "$_\n" for (ref $val ? @$val : $val);
+        print "\n";
     }
 
     # TODO: autodetect license type
-    print "+ license $_\n" for (qw/PerlArtistic GPL/);
+    print "license\n$_\n\n" for (qw/PerlArtistic GPL/);
 }
 
 sub loadmeta

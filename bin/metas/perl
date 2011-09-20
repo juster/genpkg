@@ -1,0 +1,84 @@
+#!/usr/bin/env perl
+
+use warnings 'FATAL' => 'all';
+use strict;
+
+use File::Fetch;
+use IO::Handle; # for autoflush
+
+my $PROG = 'perl-cpan';
+
+sub err
+{
+	print STDERR @_;
+	exit 2;	
+}
+
+sub distsearch
+{
+	my ($dist) = @_;
+
+	# Refresh our local list of distributions if needed.
+	my $var = $ENV{'PKGVAR'}
+		or die "$PROG: PKGVAR env variable is unset\n";
+
+	if (! -f "$var/cpan" || -M "$var/cpan" > 1) {
+		print STDERR "Refreshing local CPAN distribution list...";
+		system qq{cpandists >'$var/cpan' 2>/dev/null};
+		err("FAILED\n") unless $? == 0;
+		print STDERR "OK\n";
+	}
+
+	open DISTS, '<', "$var/cpan" or err("$PROG: open: $!");
+	while (<DISTS>) {
+		my @f = split;
+		next unless lc $f[0] eq lc $dist;
+		close DISTS;
+		return ($f[0], $f[2]);
+	}
+	close DISTS;
+	return ();
+}
+
+sub fetchdist
+{
+	my ($cpath) = @_;
+	my $file = $cpath; $file =~ s{^.*/}{};
+
+	my $mirror = $ENV{'CPANMIRROR'} || 'ftp://cpan.pair.com';
+	my $url = "${mirror}/authors/id/${cpath}";
+
+	print STDERR "Downloading $file... ";
+	my $ff = File::Fetch->new('uri' => $url);
+	err("FAILED\n") unless $ff->fetch();
+	print STDERR "OK\n";
+}
+
+sub main
+{
+	my $pkg = shift or die "Usage: $PROG [package name]\n";
+	my $dist = $pkg;
+	return 1 unless $dist =~ s/^perl-// > 0;
+	
+	STDERR->autoflush(1);
+	my ($realname, $cpath) = distsearch($dist);
+	die "$PROG: failed to find perl dist similar to $dist\n"
+		unless $realname;
+	fetchdist($cpath);
+
+	my $srch = 'http://search.cpan.org';
+	print <<"END_META";
+url
+$srch/dist/$realname
+
+source
+$srch/CPAN/authors/id/$cpath
+
+END_META
+
+	my $file = $cpath; $file =~ s{^.*/}{};
+	system 'perl-dist', $file;
+	return $?;
+}
+
+exit main(@ARGV);

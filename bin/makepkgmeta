@@ -1,0 +1,27 @@
+#!/bin/sh
+
+case $# in
+0)	echo "Usage: makepkgmeta [pkgname]" 1>&2
+	exit 1
+esac
+
+case "$METABIN" in
+'')	echo "makepkgmeta: set METABIN before calling makepkgmeta" 1>&2
+	exit 2
+esac
+
+for flav in "$METABIN"/*
+do
+	[ -x "$flav" ] || continue
+	PATH="$PATH:$flav.d" "$flav" $1
+	metaret=$?
+	case $metaret in
+	0) exit 0 ;;
+	1) ;;
+	2) echo "error: $flav encountered an error"; exit 2 ;;
+	*) echo "error: $flav returned error code $metaret"; exit 2 ;;
+	esac
+done
+
+echo "error: no matching meta generator found for '$1'" 1>&2
+exit 1

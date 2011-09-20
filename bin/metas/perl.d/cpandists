@@ -1,0 +1,50 @@
+#!/bin/sh
+
+mirror=ftp://cpan.pair.com
+path=/modules/02packages.details.txt.gz
+
+curl --silent $mirror$path | gzip -dc | awk '
+NR < 10 { next }
+{
+    file = a[split($3, a, "/")]
+    len = split(file, a, ".")
+
+    if (!match(a[1], /[-_][vV]?[0-9]+$/)) {
+        print "error: failed to grok " $3 | "cat 1>&2"
+        next
+    }
+    ver  = substr(file, RSTART+1, RLENGTH-1)
+    dist = substr(file, 1, RSTART-1)
+    for (i=2; i<=len; i++) {
+        if (a[i] !~ /^[0-9]/) break
+        ver = ver "." a[i]
+    }
+    sub(/^[vV]/, "", ver)
+
+    if (lessthan(dists[dist], ver)) {
+        dists[dist] = ver
+        paths[dist] = $3
+    }
+}
+
+END {
+    for (dist in dists) print dist, dists[dist], paths[dist] | "sort"
+}
+
+function lessthan (l, r)
+{
+    return decver(l) < decver(r)
+}
+
+function decver (vs)
+{
+    pcnt = gsub(/[.]/, ".", vs)
+    if (pcnt < 2) return vs
+
+    len = split(vs, vc, ".")
+    dec = vc[1]
+    for (i=2; i<=len; i++) dec += (10 ^ (-i * 3)) * vc[i]
+    return dec
+}
+
+'

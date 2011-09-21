@@ -1,6 +1,6 @@
 #!/bin/sh
 
-mirror=ftp://cpan.pair.com
+mirror=${CPANMIRROR:-ftp://cpan.pair.com}
 path=/modules/02packages.details.txt.gz
 
 curl --silent $mirror$path | gzip -dc | awk '

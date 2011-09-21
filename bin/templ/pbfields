@@ -19,6 +19,8 @@ BEGIN {
 
 NF < 2 { next }
 
+$1 ~ "packager" { packager = $2 }
+
 $1 ~ /depends$|conflicts|provides|source/ { quotevals() }
 
 $1 == "pkgdesc" {
@@ -33,6 +35,10 @@ arrfield[$1] {
 }
 
 END {
+    if (!packager) { packager = "Anonymous" }
+    print "# Maintainer: " packager
+    print ""
+
     OFS = "="; ORS = "\n";
     for (i=1; i<=max; i++) {
         name = fields[i]

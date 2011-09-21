@@ -3,12 +3,17 @@ PKGS = $(PWD)/pkg
 BIN = $(PWD)/bin
 PKGVAR = $(PWD)/var
 
-.PHONY: checkpkgarg package tweakmeta
+.PHONY: checkpkgarg package tweakmeta PKGBUILD
 
 package: $(PKGS)/$(PKG)/PKGBUILD
 #	cd "$(PKGS)/$(PKG)"; makepkg --clean
 
+PKGBUILD: $(PKGS)/$(PKG)/PKGBUILD
+
 $(PKGS)/$(PKG)/PKGBUILD: tweakmeta
+	@cd '$(PKGS)/$(PKG)'; \
+	TDIR='$(BIN)/templ' $(BIN)/makepkgbuild >PKGBUILD
+	@echo 'Built pkg/$(PKG)/PKGBUILD.'
 
 tweakmeta: $(PKGS)/$(PKG)/PKGMETA
 	@if [ -r '$(TWEAKS)/$(PKG)' ]; \
@@ -17,6 +22,7 @@ tweakmeta: $(PKGS)/$(PKG)/PKGMETA
 		$(BIN)/tweakmeta >PKGMETA.new <'$(TWEAKS)/$(PKG)'; \
 		mv PKGMETA PKGMETA.old; \
 		mv PKGMETA.new PKGMETA; \
+		echo 'Tweaked PKGMETA with tweaks/$(PKG)'; \
 	fi
 
 $(PKGS)/$(PKG)/PKGMETA: prepare

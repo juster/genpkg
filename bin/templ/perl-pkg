@@ -16,11 +16,6 @@ my %ACTIONS_OF = ('MM',
                     'package' => [ q{./Build install} ]
                    } );
 
-my $PBBEG = <<'END_BEG';
-# Maintainer : %s
-# Generator  : pbjam %s
-END_BEG
-
 my %FUNCFMTS;
 $FUNCFMTS{'build'} = <<'END_FMT';
 build() {
@@ -90,20 +85,6 @@ sub printpb
     my ($btype, $pbvars) = @_;
     my $acts = $ACTIONS_OF{$btype}
         or die "$0: unknown build type ($btype)\n";
-
-    my $pkger = $pbvars->{'packager'}[0] || 'Anonymous';
-    printf $PBBEG, $pkger, $pbvars->{'pbjver'}[0];
-    print "\n";
-
-    # 'pbfields' will recognize and PKGBUILD fields in the data
-    # and print them out in order, wordwrapping arrays.
-    open my $pbfields, '|pbfields' or die "failed to pipe to pbfields: $!";
-    while (my ($name, $vals) = each %$pbvars) {
-        print $pbfields $name, "\n";
-        print $pbfields $_, "\n" for @$vals;
-        print $pbfields "\n";
-    }
-    close $pbfields;
 
     my $distdir = $pbvars->{'distdir'}[0];
     print qq{_distdir="\${srcdir}/$distdir"\n};

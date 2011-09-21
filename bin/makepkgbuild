@@ -1,0 +1,35 @@
+#!/bin/sh
+
+prog=makepkgbuild
+
+if ! [ -f PKGMETA ]
+then
+	echo "$prog: PKGMETA could not be read." 1>&2
+	exit 1
+fi
+
+case "$TDIR" in
+'')	echo "$prog: TDIR env variable is not set." 1>&2
+	exit 1
+esac
+
+tcmd=$(awk '
+	BEGIN { FS = "\n"; RS = "" }
+	$1 == "template" { for (i = 2; i <= NF; i++) print $i }' PKGMETA 	| \
+	while read line
+	do
+		set -- $line
+		cmd="$TDIR/$1"
+		if ! [ -x $cmd ]
+		then
+			echo "$prog: Unknown template command: $cmd" \
+				1>&2
+			exit 2
+		fi
+		echo "$TDIR/$*"
+	done | tr '\n' '|' | sed 's/\|$//')
+
+echo "\$tcmd = $tcmd" 1>&2
+"$TDIR/pbfields" <PKGMETA >PKGBUILD
+$tcmd <PKGMETA >>PKGBUILD
+

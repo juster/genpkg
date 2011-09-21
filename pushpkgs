@@ -2,46 +2,46 @@
 
 prependid()
 {
-    awk '!/^#/ && ! done { print "# $Id$"; done = 1 } 1' PKGBUILD \
-        > PKGBUILD.new
-    mv PKGBUILD.new PKGBUILD
+	awk '!/^#/ && ! done { print "# $Id$"; done = 1 } 1' PKGBUILD \
+		> PKGBUILD.new
+	mv PKGBUILD.new PKGBUILD
 }
 
 # Make sure that the package directories are added to the SVN repo.
 syncsvn()
 {
-    svn add --parents PKGBUILD ../repos
-    # Make sure that the Id keyword-property is active.
-    svn propset svn:keywords Id PKGBUILD
+	svn add --parents PKGBUILD ../repos
+	# Make sure that the Id keyword-property is active.
+	svn propset svn:keywords Id PKGBUILD
 }
 
 
 if [ -z "$DEST" ] ; then
-    echo "Specify the destination directory with the DEST env var." 1>&2
-    exit 1
+	echo "Specify the destination directory with the DEST env var." 1>&2
+	exit 1
 fi
 
 cd pkg || exit 1
 pkgdir=$(pwd)
 
 while [ $# -gt 0 ] ; do
-    pkg=$1 ; shift
-    if [ ! -d "$pkg" ] ; then
-        echo "pkg/$pkg was not found." 1>&2
-        continue
-    fi
+	pkg=$1 ; shift
+	if [ ! -d "$pkg" ] ; then
+		echo "pkg/$pkg was not found." 1>&2
+		continue
+	fi
 
-    echo "$DEST/$pkg"
-    if [ -d "$DEST/$pkg" ] ; then
-        rm -rf "$DEST/$pkg/trunk/"*
-    fi
+	echo "$DEST/$pkg"
+	if [ -d "$DEST/$pkg" ] ; then
+		rm -rf "$DEST/$pkg/trunk/"*
+	fi
 
-    mkdir -p "$DEST/$pkg/"{trunk,repos}
-    cp -r -t "$DEST/$pkg/trunk" "$pkg"/* 
+	mkdir -p "$DEST/$pkg/"{trunk,repos}
+	cp -r -t "$DEST/$pkg/trunk" "$pkg"/* 
 
-    cd "$DEST/$pkg/trunk"
-    prependid
-    syncsvn >/dev/null 2>&1
+	cd "$DEST/$pkg/trunk"
+	prependid
+	syncsvn >/dev/null 2>&1
 
-    cd "$pkgdir"
+	cd "$pkgdir"
 done

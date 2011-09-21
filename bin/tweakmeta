@@ -118,7 +118,8 @@ function findval (field, prefix,  i, len)
 	len = pbcount[field]
 	if (len == 0) die(field " is empty!")
 
-	for (i=1; i<=len; i++) if (index(pbvars[field, i], prefix) == 0) break
+	for (i = 1; i <= len; i++)
+		if (index(pbvars[field,i], prefix) == 1) break
 	if (i > len) die("could not find " prefix " in " field "'s values")
 	return i
 }

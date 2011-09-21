@@ -1,2 +1,1 @@
-! perl-cpan HTTP-Message
 + conflicts perl-libwww<6

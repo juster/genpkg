@@ -1,2 +1,1 @@
-! perl-cpan HTTP-Daemon
 + conflicts perl-libwww<6

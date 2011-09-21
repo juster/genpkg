@@ -1,2 +1,1 @@
-! perl-cpan Encode-Locale
 + conflicts perl-libwww<6

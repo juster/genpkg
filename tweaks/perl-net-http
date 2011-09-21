@@ -1,2 +1,1 @@
-! perl-cpan Net-HTTP
 + conflicts perl-libwww<6

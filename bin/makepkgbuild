@@ -46,7 +46,7 @@ tcmd=$(awk '
 		fi
 		echo "$TDIR/$*"
 	done \
-	| tr '\n' '|' | sed 's/\|$//')
+	| tr '\n' '|' | sed 's/[|]$//')
 
 "$TDIR/pbfields" <PKGMETA >PKGBUILD
 $tcmd <PKGMETA >>PKGBUILD

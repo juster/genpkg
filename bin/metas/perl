@@ -44,6 +44,10 @@ sub fetchdist
 {
 	my ($cpath) = @_;
 	my $file = $cpath; $file =~ s{^.*/}{};
+	if (-f $file) {
+		print STDERR "$file already downloaded.\n";
+		return;
+	}
 
 	my $mirror = $ENV{'CPANMIRROR'} || 'ftp://cpan.pair.com';
 	my $url = "${mirror}/authors/id/${cpath}";

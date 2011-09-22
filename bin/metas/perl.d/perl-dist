@@ -364,10 +364,13 @@ sub chsrcdir
 {
     my ($srcdir, $distfile) = @_;
 
-    mkdir $srcdir or die "mkdir $srcdir: $!";
+    unless (-d $srcdir) {
+        mkdir $srcdir or die "mkdir $srcdir: $!";
+    }
     chdir $srcdir or die "chdir $srcdir: $!";
-    symlink catfile('..', $distfile), $distfile
-        or die "symlink $distfile: $!";
+    unless (-f $distfile) {
+        symlink catfile('..', $distfile), $distfile or die "symlink $distfile: $!";
+    }
 
     return $srcdir;
 }

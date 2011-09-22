@@ -26,14 +26,11 @@ tweakmeta: $(PKGS)/$(PKG)/PKGMETA
 	fi
 
 $(PKGS)/$(PKG)/PKGMETA: prepare
-	@rm -rf tmp
-	@mkdir tmp
-	@cd tmp; \
+	@[ -d '$(PKGS)/$(PKG)' ] || mkdir '$(PKGS)/$(PKG)'
+	@cd '$(PKGS)/$(PKG)'; \
 		PATH="$$PATH:$(BIN)" METABIN="$(BIN)/metas" \
 		PKGVAR="$(PKGVAR)" \
 		$(BIN)/makepkgmeta $(PKG) >PKGMETA
-	@rm -rf "$(PKGS)/$(PKG)"
-	@mv tmp "$(PKGS)/$(PKG)"
 	@echo 'Created pkg/$(PKG)/PKGMETA.'
 
 prepare:

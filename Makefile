@@ -12,7 +12,7 @@ PKGBUILD: $(PKGS)/$(PKG)/PKGBUILD
 
 $(PKGS)/$(PKG)/PKGBUILD: tweakmeta
 	@cd '$(PKGS)/$(PKG)'; \
-	TDIR='$(BIN)/templ' $(BIN)/makepkgbuild >PKGBUILD
+	TDIR='$(BIN)/templ' $(BIN)/makepkgbuild
 	@echo 'Built pkg/$(PKG)/PKGBUILD.'
 
 tweakmeta: $(PKGS)/$(PKG)/PKGMETA

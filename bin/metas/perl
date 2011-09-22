@@ -58,7 +58,8 @@ sub main
 {
 	my $pkg = shift or die "Usage: $PROG [package name]\n";
 	my $dist = $pkg;
-	return 1 unless $dist =~ s/^perl-// > 0;
+
+	$dist = "app-$dist" if $dist =~ s/^perl-// == 0;
 	
 	STDERR->autoflush(1);
 	my ($realname, $cpath) = distsearch($dist);

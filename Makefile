@@ -22,7 +22,7 @@ tweakmeta: $(PKGS)/$(PKG)/PKGMETA
 		$(BIN)/tweakmeta >PKGMETA.new <'$(TWEAKS)/$(PKG)'; \
 		mv PKGMETA PKGMETA.old; \
 		mv PKGMETA.new PKGMETA; \
-		echo 'Tweaked PKGMETA with tweaks/$(PKG)'; \
+		echo 'Tweaked PKGMETA with tweaks/$(PKG).'; \
 	fi
 
 $(PKGS)/$(PKG)/PKGMETA: prepare

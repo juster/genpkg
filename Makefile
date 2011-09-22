@@ -34,7 +34,9 @@ $(PKGS)/$(PKG)/PKGMETA: prepare
 	@echo 'Created pkg/$(PKG)/PKGMETA.'
 
 prepare:
-.ifndef PKG
-	@echo 'error: Specify the package name in the PKG variable.' 1>&2
-	@false
-.endif
+	@case '$(PKG)' in \
+	'') echo 'error: Specify the package name in the PKG variable.' 1>&2 ;\
+	   false ;; \
+	esac
+	@[ -d var ] || mkdir var
+

@@ -35,8 +35,8 @@ $(PKGS)/$(PKG)/PKGMETA: prepare
 
 prepare:
 	@case '$(PKG)' in \
-	'') echo 'error: Specify the package name in the PKG variable.' 1>&2 ;\
-	   false ;; \
+	'')	echo 'error: Specify the package name in the PKG variable.' 1>&2 ;\
+		false ;; \
 	esac
 	@[ -d var ] || mkdir var
 

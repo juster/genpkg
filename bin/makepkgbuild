@@ -16,7 +16,7 @@ i
 '"$txt"'
 .
 wq
-' | tee dbg | ed PKGBUILD >/dev/null 2>&1
+' | ed PKGBUILD >/dev/null 2>&1
 		return $? ;;
 	esac
 }

@@ -175,7 +175,7 @@ sub _reqs2deps
     my ($prereqs) = @_;
 
     my %pkgdeps;
-
+    
     CPAN_DEP_LOOP:
     while (my ($name, $ver) = each %$prereqs) {
         # Sometimes a perl version is given as a prerequisite
@@ -206,7 +206,7 @@ sub _reqs2deps
 
             # Avoid parsing a bundled version of 0. Is this possible?
             my $bundle_vobj = version->parse($bundled_version);
-            my $dep_vobj    = version->parse($ver);
+            my $dep_vobj = version->parse($ver);
             next CPAN_DEP_LOOP if $bundle_vobj >= $dep_vobj;
         }
 
@@ -223,7 +223,7 @@ sub _reqs2deps
         # are 0)
         $pkgdeps{$pkgname} ||= ($ver ? dist_pkgver($ver) : 0);
     }
-
+    
     return \%pkgdeps;
 }
 
@@ -233,20 +233,20 @@ sub prereqs
 
     # maps perl names for different dependencies to ArchLinux's names
     my %namemap = ('configure' => 'makedepends',
-                   'build'     => 'makedepends',
-                   'test'      => 'checkdepends',
-                   'runtime'   => 'depends');
+                   'build' => 'makedepends',
+                   'test' => 'checkdepends',
+                   'runtime' => 'depends');
 
     my %pkgdeps;
     while (my ($perl, $arch) = each %namemap) {
         my $reqs = $prereqs->{$perl}{'requires'};
-        my $deps = _reqs2deps($reqs) if $reqs;
+        my $deps; $deps = _reqs2deps($reqs) if $reqs;
 
         next unless keys %$deps;
         if ($pkgdeps{$arch}) { _merge($pkgdeps{$arch}, $deps); }
         else { $pkgdeps{$arch} = $deps; }
     }
-
+    
     # ArchLinux now has a separate array for dependencies that we only
     # need for checking (aka "testing"). Older perl METAs do not
     # have this separated. Force any test modules to be checkdepends.
@@ -263,7 +263,7 @@ sub prereqs
     }
 
     _mergedups(@pkgdeps{qw/makedepends checkdepends/});
-    _mergedups(@pkgdeps{qw/depends     makedepends/});
+    _mergedups(@pkgdeps{qw/depends makedepends/});
 
     # Convert all deps into arrays of strings.
     for my $deptype (keys %pkgdeps) {
@@ -536,7 +536,6 @@ sub _readmedesc
         chomp;
         next unless /\ANAME/ ... /\A[A-Z]+/
             and / \A \s* ${modname} [\s\-]+ (.+) \z /x;
-        print STDERR qq{Found description "$1" in README};
         return $1;
     }
 

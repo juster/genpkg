@@ -5,18 +5,37 @@ prog=makepkgbuild
 appendpb()
 {
 	txt=$(awk -v f=$1 'BEGIN { FS = "\n"; RS = "" }
-		$1 == f "()" { for (i = 2; i <= NF; i++) print $i }' PKGMETA \
-		| sed 's/^/    /')
+		$1 ~ "^" f "[(][)]<?$" { for (i = 2; i <= NF; i++) print $i }' \
+		PKGMETA | sed 's/^/	   /')
 
 	case "$txt" in
 	'')	return 0 ;;
-	*)	echo '/^ *'"${func}"'()[ \\n]*{
+	*)	echo "/^ *${func}()[ \\n]*{
 /^}
 i
-'"$txt"'
+$txt
 .
 wq
-' | ed PKGBUILD >/dev/null 2>&1
+" | ed PKGBUILD >/dev/null 2>&1
+		return $? ;;
+	esac
+}
+
+prependpb()
+{
+	txt=$(awk -v f=$1 'BEGIN { FS = "\n"; RS = "" }
+		$1 == ">" f "()" { for (i = 2; i <= NF; i++) print $i }' \
+        PKGMETA | sed 's/^/    /')
+
+	case "$txt" in
+	'')	return 0 ;;
+	*)	echo "/^ *${func}()[ \\n]*{
+/^[ \t]*cd/
+a
+$txt
+.
+wq
+" | ed PKGBUILD >/dev/null 2>&1
 		return $? ;;
 	esac
 }
@@ -55,7 +74,12 @@ for func in package check build
 do
 	if ! appendpb $func
 	then
-		echo "$prog: failed to append to the ${func}() function in PKGBUILD" 1>&2
+		echo "$prog: error when trying to append to ${func}()" 1>&2
+		exit 2
+	fi
+	if ! prependpb $func
+	then
+		echo "$prog: error when trying to prepend to ${func}()" 1>&2
 		exit 2
 	fi
 done

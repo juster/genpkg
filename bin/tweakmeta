@@ -66,12 +66,6 @@ END {
 		for (i=1; i<=len; i++) print pbvars[name, i]
 		print ""
 	}
-
-	if (!seenpkgr) {
-		pkger = ENVIRON["PACKAGER"]
-		if (pkger == "") pkger = "Anonymous"
-		print "packager", pkger, ""
-	}
 }
 
 function die (msg)
@@ -94,7 +88,6 @@ function remall (field)
 
 function pushval (field, val)
 {
-	if (field == "packager") seenpkgr = 1
 	pbvars[field, ++pbcount[field]] = val
 }
 

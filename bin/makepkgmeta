@@ -10,7 +10,9 @@ case "$METABIN" in
 	exit 2
 esac
 
-printf "pkgname\n%s\n\npkgrel\n%d\n\n" $1 1
+printf "pkgname\n%s\n\n" "$1"
+printf "pkgrel\n%d\n\n" "${PKGREL:-1}"
+printf "packager\n%s\n\n" "${PACKAGER:-Anonymous}"
 
 for flav in "$METABIN"/*
 do

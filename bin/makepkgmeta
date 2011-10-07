@@ -21,7 +21,7 @@ do
 	metaret=$?
 	case $metaret in
 	0) exit 0 ;;
-	1) ;;
+	1) ;; # continue looping
 	2) echo "error: $flav encountered an error"; exit 2 ;;
 	*) echo "error: $flav returned error code $metaret"; exit 2 ;;
 	esac

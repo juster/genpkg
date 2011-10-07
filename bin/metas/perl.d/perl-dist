@@ -356,9 +356,10 @@ sub chsrcdir
 {
 	my ($srcdir, $distfile) = @_;
 
-	unless(-d $srcdir) {
-		mkdir $srcdir or die "mkdir $srcdir: $!";
+	if (-e $srcdir) {
+		system("rm", "-r", $srcdir) == 0 or die "failed to rm $srcdir\n";
 	}
+	mkdir $srcdir or die "mkdir $srcdir: $!";
 	chdir($srcdir) or die "chdir $srcdir: $!";
 	unless(-f $distfile) {
 		symlink(catfile('..', $distfile), $distfile) or die "symlink $distfile: $!";

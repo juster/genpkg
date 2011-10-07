@@ -10,7 +10,7 @@ appendpb()
 
 	case "$txt" in
 	'')	return 0 ;;
-	*)	echo "/^ *${func}()[ \\n]*{
+	*)	echo "/^ *${func}() *{
 /^}
 i
 $txt
@@ -29,7 +29,7 @@ prependpb()
 
 	case "$txt" in
 	'')	return 0 ;;
-	*)	echo "/^ *${func}()[ \\n]*{
+	*)	echo "/^ *${func}() *{
 /^[ \t]*cd/
 a
 $txt

@@ -19,7 +19,9 @@ BEGIN {
 
 NF < 2 { next }
 
-$1 ~ "packager" { packager = $2 }
+$1 == "packager" { packager = $2 }
+
+$1 == "maintainer" { maintainer = $2 }
 
 $1 ~ /depends$|conflicts|provides|source/ { quotevals() }
 
@@ -35,8 +37,9 @@ arrfield[$1] {
 }
 
 END {
-    if (!packager) { packager = "Anonymous" }
-    print "# Maintainer: " packager
+    if (!maintainer && !packager) { packager = "Anonymous" }
+    if (maintainer) print "# Maintainer: " maintainer
+    else if (packager) print "# Packager: " packager
     print ""
 
     OFS = "="; ORS = "\n";

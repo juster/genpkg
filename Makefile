@@ -3,10 +3,7 @@ PKGS = $(PWD)/pkg
 BIN = $(PWD)/bin
 PKGVAR = $(PWD)/var
 
-.PHONY: checkpkgarg package tweakmeta PKGBUILD
-
-package: $(PKGS)/$(PKG)/PKGBUILD
-#	cd "$(PKGS)/$(PKG)"; makepkg --clean
+.PHONY: prepare package tweakmeta PKGBUILD
 
 PKGBUILD: $(PKGS)/$(PKG)/PKGBUILD
 
@@ -22,7 +19,7 @@ tweakmeta: $(PKGS)/$(PKG)/PKGMETA
 		$(BIN)/tweakmeta >PKGMETA.new <'$(TWEAKS)/$(PKG)'; \
 		mv PKGMETA PKGMETA.old; \
 		mv PKGMETA.new PKGMETA; \
-		echo 'Tweaked PKGMETA with tweaks/$(PKG)'; \
+		echo 'Tweaked PKGMETA with tweaks/$(PKG).'; \
 	fi
 
 $(PKGS)/$(PKG)/PKGMETA: prepare
@@ -35,8 +32,10 @@ $(PKGS)/$(PKG)/PKGMETA: prepare
 
 prepare:
 	@case '$(PKG)' in \
-	'') echo 'error: Specify the package name in the PKG variable.' 1>&2 ;\
-	   false ;; \
+	'')	echo 'error: Specify the package name in the PKG variable.' 1>&2 ;\
+		false ;; \
 	esac
-	@[ -d var ] || mkdir var
+	@[ -d '$(PKGVAR)' ] || mkdir '$(PKGVAR)'
 
+package: $(PKGS)/$(PKG)/PKGBUILD
+	cd "$(PKGS)/$(PKG)"; makepkg --clean

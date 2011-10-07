@@ -412,7 +412,7 @@ sub printmeta
 	}
 
 	# TODO: autodetect license type
-	print("license\n$_\n\n") for (qw/PerlArtistic GPL/);
+	printf("license\n%s\n\n", join("\n", qw/PerlArtistic GPL/));
 }
 
 sub loadmeta

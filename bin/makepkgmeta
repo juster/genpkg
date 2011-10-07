@@ -14,6 +14,11 @@ printf "pkgname\n%s\n\n" "$1"
 printf "pkgrel\n%d\n\n" "${PKGREL:-1}"
 printf "packager\n%s\n\n" "${PACKAGER:-Anonymous}"
 
+if [ "$MAINTAINER" ]
+then
+	printf "maintainer\n%s\n\n" "$MAINTAINER"
+fi
+
 for flav in "$METABIN"/*
 do
 	[ -x "$flav" ] || continue

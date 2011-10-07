@@ -1,0 +1,6 @@
+! perl-cpan AnyEvent
++ optdepends perl-async-interrupt: Faster signal handling for some event loops.
++ depends perl-ev>=4.00
++ depends perl-guard>=1.02
++ depends perl-json-xs>=2.2
++ depends perl-net-ssleay>=1.33

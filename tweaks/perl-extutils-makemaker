@@ -1,0 +1,6 @@
++ depends perl-cpan-meta>=2.112150
++ depends perl-extutils-install>=1.52
++ depends perl-extutils-command>=1.16
++ depends perl-extutils-manifest>=1.58
++ >build() sed -e '/my::bundles/d' Makefile.PL >Makefile.PL.new
++ >build() mv Makefile.PL.new Makefile.PL

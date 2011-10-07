@@ -345,6 +345,7 @@ sub main
 
 	# Since this is a perl distribution, use the perl-pkg template.
 	printf("template\nperl-pkg %s\n\n", (-f "$dir/Build.PL" ? "MB" : "MM"));
+	print("options\n!emptydirs\n\n");
 
 	printmeta(\%pbvars);
 	return 0;
@@ -357,7 +358,7 @@ sub chsrcdir
 	my ($srcdir, $distfile) = @_;
 
 	if (-e $srcdir) {
-		system("rm", "-r", $srcdir) == 0 or die "failed to rm $srcdir\n";
+		system("rm", "-fr", $srcdir) == 0 or die "failed to rm $srcdir\n";
 	}
 	mkdir $srcdir or die "mkdir $srcdir: $!";
 	chdir($srcdir) or die "chdir $srcdir: $!";

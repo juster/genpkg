@@ -1,20 +1,19 @@
 #!/usr/bin/awk -f
 
 BEGIN {
-    fieldstr = "pkgname pkgver pkgrel pkgdesc epoch"                    \
-        " *arch *license *options"                                      \
-        " install changelog"                                            \
-        " *depends *makedepends *checkdepends *optdepends"              \
-        " *conflicts *provides"                                         \
-        " url *source *noextract *md5sums *sha512sums"
-    max = split(fieldstr, fields)
-    for (i=1; i<=max; i++) {
-        if (sub(/^[*]/, "", fields[i])) arrfield[fields[i]] = 1;
-        else strfield[fields[i]] = 1;
-    }
+	fieldstr = "pkgname pkgver pkgrel pkgdesc epoch" \
+		" *arch *license *options" \
+		" install changelog" \
+		" *depends *makedepends *checkdepends *optdepends" \
+		" *conflicts *provides" \
+		" url *source *noextract *md5sums *sha512sums"
+	max = split(fieldstr, fields)
+	for(i=1; i<=max; i++) {
+		if(sub(/^[*]/, "", fields[i])) arrfield[fields[i]] = 1;
+		else strfield[fields[i]] = 1;
+	}
 
-    COLS = 78
-    FS = "\n"; RS = ""
+	COLS = 78; FS = "\n"; RS = ""
 }
 
 NF < 2 { next }
@@ -26,68 +25,67 @@ $1 == "maintainer" { maintainer = $2 }
 $1 ~ /depends$|conflicts|provides|source/ { quotevals() }
 
 $1 == "pkgdesc" {
-    gsub(/[$"`]/, "\\\\&", $2)
-    $2 = sprintf("\"%s\"", $2)
+	gsub(/[$"`]/, "\\\\&", $2)
+	$2 = sprintf("\"%s\"", $2)
 }
 
 strfield[$1] { output[$1] = $2 }
 
 arrfield[$1] {
-    output[$1] = wraparray(length($1) + 2)
+	output[$1] = wraparray(length($1) + 2)
 }
 
 END {
-    if (!maintainer && !packager) { packager = "Anonymous" }
-    if (maintainer) print "# Maintainer: " maintainer
-    else if (packager) print "# Packager: " packager
-    print ""
+	if(!maintainer && !packager) { packager = "Anonymous" }
+	if(maintainer) print "# Maintainer: " maintainer
+	else if(packager) print "# Packager: " packager
+	print ""
 
-    OFS = "="; ORS = "\n";
-    for (i=1; i<=max; i++) {
-        name = fields[i]
-        if (name in output) print name, output[name]
-    }
+	OFS = "="; ORS = "\n";
+	for(i=1; i<=max; i++) {
+		name = fields[i]
+		if(name in output) print name, output[name]
+	}
 }
 
 function wraparray (indent)
 {
-    if (NF == 1) return "()" # this shouldn't happen but just in case.
+	if(NF == 1) return "()" # this shouldn't happen but just in case.
 
-    line = ""
-    delete lines
-    linecount = 0
+	line = ""
+	delete lines
+	linecount = 0
 
-    i = 2
-    while (i <= NF) {
-        linelen = length(line)
+	i = 2
+	while(i <= NF) {
+		linelen = length(line)
 
-        if ((indent + linelen + 1 + length($i) > COLS) && linelen > 0) {
-            lines[++linecount] = line
-            line = ""
-        }
-        else {
-            if (linelen == 0) line = $(i++)
-            else line = line " " $(i++)
-        }
-    }
+		if((indent + linelen + 1 + length($i) > COLS) && linelen > 0) {
+			lines[++linecount] = line
+			line = ""
+		} else {
+			if(linelen == 0) line = $(i++)
+			else line = line " " $(i++)
+		}
+	}
 
-    if (length(line) > 0) lines[++linecount] = line
+	if(length(line) > 0) lines[++linecount] = line
 
-    indtxt = sprintf("%" indent "s", "")
-    txt = "(" lines[1]
-    for (i=2; i<=linecount; i++) txt = txt "\n" indtxt lines[i]
-    txt = txt ")"
+	indtxt = sprintf("%" indent "s", "")
+	txt = "(" lines[1]
+	for(i=2; i<=linecount; i++) txt = txt "\n" indtxt lines[i]
+	txt = txt ")"
 
-    return txt
+	return txt
 }
 
 function quotevals ()
 {
-    for (i=2; i<=NF; i++) $i = bashquote($i)
+	for(i=2; i<=NF; i++) $i = bashquote($i)
 }
 
 function bashquote (val)
 {
-    if (val ~ /\$/) return sprintf("\"%s\"", val)
-    return sprintf("'%s'", val)
+	if(val ~ /[$]/) return sprintf("\"%s\"", val)
+	return sprintf("'%s'", val)
 }

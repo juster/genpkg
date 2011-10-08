@@ -3,18 +3,17 @@
 use warnings 'FATAL' => 'all';
 use strict;
 
-use Text::Wrap qw(wrap);
-
-my %ACTIONS_OF = ('MM',
-                  { 'build'   => [ q{/usr/bin/perl Makefile.PL}, q{make} ],
-                    'check'   => [ q{make test} ],
-                    'package' => [ q{make DESTDIR="$pkgdir" install} ]
-                   },
-                  'MB',
-                  { 'build'   => [ q{/usr/bin/perl Build.PL}, q{./Build} ],
-                    'check'   => [ q{./Build test} ],
-                    'package' => [ q{./Build install} ]
-                   } );
+my %ACTIONS_OF =
+	('MM', {
+		'build'	=> [ q{/usr/bin/perl Makefile.PL}, q{make} ],
+		'check'	=> [ q{make test} ],
+		'package'	=> [ q{make DESTDIR="$pkgdir" install} ]
+	 },
+	'MB', {
+		'build'	=> [ q{/usr/bin/perl Build.PL}, q{./Build} ],
+		'check'	=> [ q{./Build test} ],
+		'package'	=> [ q{./Build install} ]
+	});
 
 my %FUNCFMTS;
 $FUNCFMTS{'build'} = <<'END_FMT';

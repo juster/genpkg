@@ -1,34 +1,76 @@
 #!/bin/sh
 
+prog=makepkgmeta
+
+lazysource()
+{
+	awk -v prog="$prog" '
+BEGIN { FS = "\n"; RS = ""; OFS = ORS = "\n\n" }
+$1 == "pkgver" { ver = $2 }
+$1 == "source" {
+	len = NF - 1
+	for (i = 2; i <= NF; i++) sources[i - 1] = $i
+	next
+}
+1 # print everything but sources
+
+END {
+	# remember that metas emit no output when they cant match
+	# a package.
+	if (NR == 0) exit 0
+
+	ORS="\n"
+	if (!ver) {
+		print prog ": wtf? pkgver is empty!" | "cat 1>&2"
+		exit 1
+	}
+	
+	# Replace any version strings in the source file with ${pkgver}.
+	gsub(/[.]/, "\\\\&", ver)
+
+	print "source"
+	for(i = 1; i <= len; i++) {
+		gsub(ver, "${pkgver}", sources[i])
+		print sources[i]
+	}
+	print ""
+}'
+	return $?
+} # end of lazysource()
+
+basicmeta()
+{
+	printf "pkgname\n%s\n\n" "$1"
+	printf "pkgrel\n%d\n\n" "${PKGREL:-1}"
+	printf "packager\n%s\n\n" "${PACKAGER:-Anonymous}"
+	
+	if [ "$MAINTAINER" ]
+	then
+		printf "maintainer\n%s\n\n" "$MAINTAINER"
+	fi
+}
+
 case $# in
-0)	echo "Usage: makepkgmeta [pkgname]" 1>&2
+0)	echo "Usage: $prog [pkgname]" 1>&2
 	exit 1
 esac
 
 case "$METABIN" in
-'')	echo "makepkgmeta: set METABIN before calling makepkgmeta" 1>&2
+'')	echo "$prog: set METABIN before calling $prog" 1>&2
 	exit 2
 esac
 
-printf "pkgname\n%s\n\n" "$1"
-printf "pkgrel\n%d\n\n" "${PKGREL:-1}"
-printf "packager\n%s\n\n" "${PACKAGER:-Anonymous}"
-
-if [ "$MAINTAINER" ]
-then
-	printf "maintainer\n%s\n\n" "$MAINTAINER"
-fi
-
 for flav in "$METABIN"/*
 do
-	[ -x "$flav" ] || continue
-	PATH="$PATH:$flav.d" "$flav" $1
+	[ -f "$flav" -a -x "$flav" ] || continue
+	PATH="$PATH:$flav.d" "$flav" $1 | lazysource
 	metaret=$?
 	case $metaret in
-	0) exit 0 ;;
-	1) ;;
-	2) echo "error: $flav encountered an error"; exit 2 ;;
-	*) echo "error: $flav returned error code $metaret"; exit 2 ;;
+	0)	basicmeta $1
+		exit 0 ;;
+	1)	;; # loop
+	2)	echo "error: $flav encountered an error"; exit 2 ;;
+	*)	echo "error: $flav returned error code $metaret"; exit 2 ;;
 	esac
 done
 

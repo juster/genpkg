@@ -5,38 +5,40 @@ use strict;
 
 use File::Fetch;
 use IO::Handle; # for autoflush
+use Cwd;
 
 my $PROG = 'perl';
 
 sub err
 {
-	print STDERR @_;
+	print STDERR @_, "\n";
 	exit 2;	
 }
 
-sub distsearch
+sub matchdist
 {
 	my ($dist) = @_;
 
 	# Refresh our local list of distributions if needed.
 	my $var = $ENV{'PKGVAR'}
-		or die "$PROG: PKGVAR env variable is unset\n";
+		or err("$PROG: PKGVAR env variable is unset\n");
 
-	if (! -f "$var/cpan" || -M "$var/cpan" > 1) {
+	my $cwd = getcwd();
+	if(! -f "$var/cpandists" || -M "$var/cpandists" > 1) {
 		print STDERR "Refreshing local CPAN distribution list...";
-		system qq{cpandists >'$var/cpan' 2>/dev/null};
-		err("FAILED\n") unless $? == 0;
+		system('cpandists');
+		err("FAILED") unless $? == 0;
 		print STDERR "OK\n";
 	}
 
-	open DISTS, '<', "$var/cpan" or err("$PROG: open: $!");
-	while (<DISTS>) {
+	open(DISTS, '<', "$var/cpandists") or err("$PROG: open: $!");
+	while(<DISTS>) {
 		my @f = split;
-		next unless lc $f[0] eq lc $dist;
-		close DISTS;
+		next unless(lc $f[0] eq lc $dist);
+		close(DISTS);
 		return ($f[0], $f[2]);
 	}
-	close DISTS;
+	close(DISTS);
 	return ();
 }
 
@@ -44,7 +46,7 @@ sub fetchdist
 {
 	my ($cpath) = @_;
 	my $file = $cpath; $file =~ s{^.*/}{};
-	if (-f $file) {
+	if(-f $file) {
 		print STDERR "$file already downloaded.\n";
 		return;
 	}
@@ -54,7 +56,7 @@ sub fetchdist
 
 	print STDERR "Downloading $file... ";
 	my $ff = File::Fetch->new('uri' => $url);
-	err("FAILED\n") unless $ff->fetch();
+	err("FAILED") unless($ff->fetch());
 	print STDERR "OK\n";
 }
 
@@ -66,9 +68,11 @@ sub main
 	$dist = "app-$dist" if $dist =~ s/^perl-// == 0;
 	
 	STDERR->autoflush(1);
-	my ($realname, $cpath) = distsearch($dist);
-	die "$PROG: failed to find perl dist similar to $dist\n"
-		unless $realname;
+	my ($realname, $cpath) = matchdist($dist);
+	unless($realname) {
+		print STDERR "$PROG: failed to find perl dist similar to $dist\n";
+		exit 1;
+	}
 	fetchdist($cpath);
 
 	my $srch = 'http://search.cpan.org';
@@ -82,7 +86,7 @@ $srch/CPAN/authors/id/$cpath
 END_META
 
 	my $file = $cpath; $file =~ s{^.*/}{};
-	system 'perl-dist', $file;
+	system('perl-dist', $file);
 	return $?;
 }
 

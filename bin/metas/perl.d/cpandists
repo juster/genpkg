@@ -3,14 +3,14 @@
 mirror=${CPANMIRROR:-ftp://cpan.pair.com}
 path=/modules/02packages.details.txt.gz
 
-curl --silent $mirror$path | gzip -dc | awk '
+curl --silent "$mirror$path" | gzip -dc | awk '
 NR < 10 { next }
 {
     file = a[split($3, a, "/")]
     len = split(file, a, ".")
 
     if (!match(a[1], /[-_][vV]?[0-9]+$/)) {
-        print "error: failed to grok " $3 | "cat 1>&2"
+        #print "error: failed to grok " $3 | "cat 1>&2"
         next
     }
     ver  = substr(file, RSTART+1, RLENGTH-1)
@@ -21,6 +21,13 @@ NR < 10 { next }
     }
     sub(/^[vV]/, "", ver)
 
+    # For some reason the newest version of perl had no modules in 02packages
+    # so I can't just use modules from the newest version of perl.
+    if(dist == "perl")
+        coremods = coremods $1 " " $2 "\n"
+    else
+        mods[dist,ver] = mods[dist,ver] $1 " " $2 "\n"
+
     if (lessthan(dists[dist], ver)) {
         dists[dist] = ver
         paths[dist] = $3
@@ -28,7 +35,16 @@ NR < 10 { next }
 }
 
 END {
-    for (dist in dists) print dist, dists[dist], paths[dist] | "sort"
+    for (dist in dists) {
+        ver = dists[dist]
+        print dist, ver, paths[dist] | "sort >cpandists"
+    }
+    close("sort >cpandists")
+
+    # Prints modules out in sorted order, too!
+    while(getline<"cpandists" > 0) {
+        print $1 "\n" ($1 == "perl" ? coremods : mods[$1,$2]) >"cpanmods"
+    }
 }
 
 function lessthan (l, r)

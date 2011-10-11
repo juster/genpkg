@@ -3,6 +3,8 @@
 use warnings 'FATAL' => 'all';
 use strict;
 
+my $PROG = 'perl-dist';
+
 package Convert;
 
 use Module::CoreList;
@@ -165,9 +167,8 @@ sub _perldepver
 sub _reqs2deps
 {
 	my ($prereqs) = @_;
+	my (@mods, %pkgdeps);	
 
-	my %pkgdeps;
-	
 	CPAN_DEP_LOOP:
 	while(my ($name, $ver) = each(%$prereqs)) {
 		# Sometimes a perl version is given as a prerequisite
@@ -175,13 +176,17 @@ sub _reqs2deps
 			$pkgdeps{'perl'} = _perldepver($ver);
 			next CPAN_DEP_LOOP;
 		}
+		push @mods, $name;
+	}
 
-		my $dist = _distofmod($name);
+	my %dists = _distsofmods(@mods);
+	while(my ($mod, $dist) = each %dists) {
 		my $pkgname = dist_pkgname($dist);
+		my $ver = $prereqs->{$mod};
 
 		# If the module is not named after the distribution, ignore its
 		# version which might not match the distribution.
-		undef $ver unless(_ismainmod($name, $dist));
+		undef $ver unless(_ismainmod($mod, $dist));
 
 		# If two module prereqs are in the same CPAN distribution then
 		# the version required for the main module will override.
@@ -189,6 +194,7 @@ sub _reqs2deps
 		# are 0)
 		$pkgdeps{$pkgname} ||= ($ver ? dist_pkgver($ver) : 0);
 	}
+
 	
 	return \%pkgdeps;
 }
@@ -254,23 +260,48 @@ sub _stringify
 	return \@depstrs;
 }
 
-my $UA;
-sub _distofmod
+sub _distsofmods
 {
-	my ($mod) = @_;
+	my (@mods) = @_;
 
-	my $UA ||= LWP::UserAgent->new();
-	my $url = "http://cpanmetadb.appspot.com/v1.0/package/$mod";
-	my $resp = $UA->get($url);
-	die "failed to lookup dist for $mod: " . $resp->status_line
-		unless($resp->is_success);
+	return () if(@mods == 0);
 
-	$resp = YAML::XS::Load($resp->content);
-	my $file = $resp->{'distfile'};
-	$file =~ s{.*/}{};
-	$file =~ s{-[^-]+\z}{};
+	use Time::HiRes qw(time);
+	my $beg = time;
 
-	return $file;
+	my $var = $ENV{'PKGVAR'}
+		or die "$PROG: PKGVAR env variable is unset\n";
+	open(my $fh, '<', "$var/cpanmods")
+		or die "$PROG: failed to open $var/cpanmods: $!";
+
+	my (@hunted, %dists) = @mods;
+	local $/ = '';
+
+	RECLOOP:
+	while(my $rec = <$fh>) {
+		my ($dist, @modvers) = split(/\n/, $rec);
+		for (@modvers) {
+			my ($m) = split;
+
+			CMPLOOP:
+			for my $i (0 .. $#hunted) {
+				next CMPLOOP unless($hunted[$i] eq $m);
+				$dists{$m} = $dist;
+				splice @hunted, $i, 1;
+				last RECLOOP if(@hunted == 0);
+				last CMPLOOP;
+			}
+		}
+	}
+
+	if (@hunted) {
+		for my $lost (@hunted) {
+			print STDERR "$PROG: failed to find module $lost\n";
+		}
+		exit 2;
+	}
+
+	return %dists;
 }
 
 #-----------------------------------------------------------------------------
@@ -290,7 +321,7 @@ use Digest::SHA ();
 
 sub main
 {
-	my $distpath = shift() or die "Usage: perl-dist [path to cpan dist file]\n";
+	my $distpath = shift() or die "Usage: $PROG [path to cpan dist file]\n";
 	my $dir  = dirname($distpath);
 	my $file = basename($distpath);
 	my $info = distinfo($file);
@@ -360,15 +391,15 @@ sub extractdist
 	my ($file) = @_;
 
 	system("bsdtar -xf $file");
-	die "perl-dist: bsdtar failed to extract $file\n" unless($? == 0);
+	die "$PROG: bsdtar failed to extract $file\n" unless($? == 0);
 
 	opendir(my $srcdir, '.') or die "opendir: $!";
 	my @dirs = grep { -d $_ && !/\A[.]/ } readdir($srcdir);
 	closedir($srcdir);
 
-	die("perl-dist: many dirs (@dirs) inside the tarball $file\n")
+	die("$PROG: many dirs (@dirs) inside the tarball $file\n")
 		if(@dirs > 1);
-	die("perl-dist: no dirs found in tarball $file\n") if(@dirs == 0);
+	die("$PROG: no dirs found in tarball $file\n") if(@dirs == 0);
 	return $dirs[0];
 }
 
@@ -377,7 +408,7 @@ sub printmeta
 	my ($pbvars) = @_;
 	while(my ($name, $val) = each(%$pbvars)) {
 		if(!defined($val) || $val eq q{}) {
-			warn("perl-dist: warning: $name is undefined\n");
+			warn("$PROG: warning: $name is undefined\n");
 			$val = q{};
 		}
 		print($name, "\n");

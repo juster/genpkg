@@ -22,7 +22,7 @@ NR < 10 { next }
     sub(/^[vV]/, "", ver)
 
     # For some reason the newest version of perl had no modules in 02packages
-    # so I can't just use modules from the newest version of perl.
+    # so I cant just use modules from the newest version of perl.
     if(dist == "perl")
         coremods = coremods $1 " " $2 "\n"
     else

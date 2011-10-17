@@ -167,7 +167,7 @@ sub _perldepver
 sub _reqs2deps
 {
 	my ($prereqs) = @_;
-	my (@mods, %pkgdeps);	
+	my (@mods, %pkgdeps);
 
 	CPAN_DEP_LOOP:
 	while(my ($name, $ver) = each(%$prereqs)) {
@@ -195,7 +195,6 @@ sub _reqs2deps
 		$pkgdeps{$pkgname} ||= ($ver ? dist_pkgver($ver) : 0);
 	}
 
-	
 	return \%pkgdeps;
 }
 
@@ -218,7 +217,7 @@ sub prereqs
 		if($pkgdeps{$arch}) { _merge($pkgdeps{$arch}, $deps); }
 		else { $pkgdeps{$arch} = $deps; }
 	}
-	
+
 	# ArchLinux now has a separate array for dependencies that we only
 	# need for checking (aka "testing"). Older perl METAs do not
 	# have this separated. Force any test modules to be checkdepends.

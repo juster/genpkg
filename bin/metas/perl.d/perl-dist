@@ -130,19 +130,24 @@ sub _mergedups
 	return;
 }
 
+sub _filterdeps(&$)
+{
+	my ($fsub, $deps) = @_;
+	my %fed;
+
+	my @pkgs = keys(%$deps);
+	for my $dname (grep { $fsub->() } @pkgs){
+		my $dver = delete($deps->{$dname});
+		$fed{$dname} = $dver if(defined $dver);
+	}
+
+	return \%fed;
+}
+
 #---HELPER FUNCTION---
 sub _yankcheckers
 {
-	my ($deps_ref) = @_;
-	my %checkdeps;
-
-	my @pkgs = keys %$deps_ref;
-	for my $testdep (grep { /^perl-pod-coverage$|perl-test-/ } @pkgs){
-		my $val = delete($deps_ref->{$testdep});
-		$checkdeps{$testdep} = $val if(defined($val));
-	}
-
-	return \%checkdeps;
+	_filterdeps { /^perl-pod-coverage$|^perl-test-/ } $_[0]
 }
 
 #---HELPER FUNCTION---
@@ -223,8 +228,7 @@ sub prereqs
 	# have this separated. Force any test modules to be checkdepends.
 	if(!$pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/) {
 		my $checkdeps = {};
-		my $makedeps = $pkgdeps{'makedepends'};
-		_merge($checkdeps, _yankcheckers($makedeps));
+		_merge($checkdeps, _yankcheckers($pkgdeps{$_})) for(qw/makedepends depends/);
 		$pkgdeps{'checkdepends'} = $checkdeps;
 	}
 

@@ -2,85 +2,82 @@
 
 prog=makepkgbuild
 
-appendpb()
+die()
 {
-	txt=$(awk -v f=$1 'BEGIN { FS = "\n"; RS = "" }
-		$1 ~ "^" f "[(][)]<?$" { for (i = 2; i <= NF; i++) print $i }' \
-		PKGMETA | sed 's/^/	   /')
-
-	case "$txt" in
-	'')	return 0 ;;
-	*)	echo "/^ *${func}() *{
-/^}
-i
-$txt
-.
-wq
-" | ed PKGBUILD >/dev/null 2>&1
-		return $? ;;
-	esac
+	rc=$1; shift
+	echo "$prog: $*" 1>&2
+	exit $rc
 }
 
-prependpb()
+editpb()
 {
-	txt=$(awk -v f=$1 'BEGIN { FS = "\n"; RS = "" }
-		$1 == ">" f "()" { for (i = 2; i <= NF; i++) print $i }' \
-        PKGMETA | sed 's/^/    /')
+	op=$1 func=$2
 
-	case "$txt" in
-	'')	return 0 ;;
-	*)	echo "/^ *${func}() *{
+	case "$op" in
+	append)
+		regexp="^${func}[(][)]<?$"
+		edin="/^ *$func() *{
+/^}
+i" ;;
+	prepend)
+		regexp=">${func}()"
+		edin="/^ *$func() *{
 /^[ \t]*cd/
-a
+a" ;;
+	*)	die 2 unknown editpb operation: $op
+	esac
+
+	txt=$(awk -v r="$regexp" -v f="$func" 'BEGIN { FS = "\n"; RS = "" }
+		$1 ~ r { for (i = 2; i <= NF; i++) print $i }' \
+		PKGMETA | sed 's/^/    /')
+	[ X"$txt" = X ] && return 0
+
+	cat <<END | ed -s PKGBUILD >/dev/null
+$edin
 $txt
 .
 wq
-" | ed PKGBUILD >/dev/null 2>&1
-		return $? ;;
-	esac
+END
+	return $?
 }
 
 if ! [ -r PKGMETA ]
 then
-	echo "$prog: PKGMETA could not be read." 1>&2
-	exit 1
+	die 1 "PKGMETA could not be read."
 fi
 
 case "$TDIR" in
-'')	echo "$prog: TDIR env variable is not set." 1>&2
-	exit 1
+'')	die 1 "TDIR env variable is not set."
 esac
 
-tcmd=$(awk '
+ttcmds=$(awk '
 	BEGIN { FS = "\n"; RS = "" }
-	$1 == "template" { for (i = 2; i <= NF; i++) print $i }' PKGMETA \
-	| while read line
-	do
-		set -- $line
-		cmd="$TDIR/$1"
-		if ! [ -x $cmd ]
-		then
-			echo "$prog: Unknown template command: $cmd" 1>&2
-			exit 2
-		fi
-		echo "$TDIR/$*"
-	done \
-	| tr '\n' '|' | sed 's/[|]$//')
+	$1 == "template" { for (i = 2; i <= NF; i++) print $i }' PKGMETA)
+
+oifs=$IFS
+IFS='
+'
+for ttcmd in "$ttcmds"
+do
+	IFS=' '
+	set -- $ttcmd
+	cmd="$TDIR/$1"
+	if ! [ -f "$cmd" -a -x "$cmd" ]
+	then
+		die 2 "Unknown template command: $cmd"
+	fi
+done
+IFS=$oifs
+
+ttcmd="cat PKGMETA$(echo "$ttcmds" | sed "s!^! | $TDIR/!" | tr -d '\n')"
 
 "$TDIR/pbfields" <PKGMETA >PKGBUILD
-$tcmd <PKGMETA >>PKGBUILD
+eval $ttcmd >>PKGBUILD || die 2 "template pipeline ($ttcmd) failed"
 
 for func in package check build
 do
-	if ! appendpb $func
-	then
-		echo "$prog: error when trying to append to ${func}()" 1>&2
-		exit 2
-	fi
-	if ! prependpb $func
-	then
-		echo "$prog: error when trying to prepend to ${func}()" 1>&2
-		exit 2
-	fi
+	for op in append prepend
+	do
+		editpb $op $func || die 2 "error $? when trying to $op to ${func}()"
+	done
 done
-

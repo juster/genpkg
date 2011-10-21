@@ -1,0 +1,55 @@
+#!/bin/sh
+
+prog=genpkg
+
+libd=~/lib/genpkg
+tweakd=~/pkg/tweaks
+pkgd=~/pkg/dest
+vard=~/var
+
+if [ $# -lt 1 ]
+then
+	echo "usage: $prog [package name]" 1>&2
+	exit 1
+fi
+
+if ! [ -d "$tweakd" ]
+then
+	echo "$prog: bad package tweaks dir: $tweakd" 1>&2
+	exit 2
+fi
+
+if ! [ -d "$pkgd" ]
+then
+	echo "$prog: bad package dest dir: $pkgd" 1>&2
+	exit 2
+fi
+
+if ! [ -d "$vard" ]
+then
+	echo "$prog: bad package var dir: $vard" 1>&2
+	exit 2
+fi
+
+cwd=$(pwd)
+set -e
+
+for pkg
+do
+	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
+	cd "$pkgd/$pkg"
+
+	METABIN=$libd/metas PKGVAR=$vard makepkgmeta "$pkg" >PKGMETA
+	echo "Generated $pkgd/$pkg/PKGMETA"
+
+	twk=$libd/tweakd/$pkg
+	if [ -f "$twk" -a -r "$twk" ]
+	then
+		tweakmeta >PKGMETA.new <$twk
+		mv PKGMETA.new PKGMETA
+		echo "Tweaked PKGMETA with $tweakd/$pkg."
+	fi
+
+	TDIR=$libd/templ makepkgbuild
+	echo "Generated $pkgd/$pkg/PKGBUILD"
+done

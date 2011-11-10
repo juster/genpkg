@@ -27,7 +27,7 @@ sub matchdist
 		print STDERR "Refreshing local CPAN distribution list...";
 		my $cwd = getcwd();
 		chdir($var) or die "chdir: $!";
-		system('cpandists');
+		system('fetchcpan');
 		err("FAILED") unless($? == 0);
 		print STDERR "OK\n";
 		chdir($cwd) or die "chdir: $!";

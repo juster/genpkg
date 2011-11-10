@@ -7,27 +7,21 @@ curl --silent "$mirror$path" | gzip -dc | awk '
 NR < 10 { next }
 {
     file = a[split($3, a, "/")]
-    len = split(file, a, ".")
 
-    if (!match(a[1], /[-_][vV]?[0-9]+$/)) {
+    if (!match(file, /[-_][vV]?[0-9]+/)) {
         #print "error: failed to grok " $3 | "cat 1>&2"
         next
     }
-    ver  = substr(file, RSTART+1, RLENGTH-1)
+    ver  = substr(file, RSTART+1)
     dist = substr(file, 1, RSTART-1)
-    for (i=2; i<=len; i++) {
-        if (a[i] !~ /^[0-9]/) break
-        ver = ver "." a[i]
-    }
+
+    sub(/[.]tar[.].*$|[.]zip$/, "", ver)
     sub(/^[vV]/, "", ver)
+    sub(/[.]pm$/, "", dist)
 
-    # For some reason the newest version of perl had no modules in 02packages
-    # so I cant just use modules from the newest version of perl.
-    if(dist == "perl")
-        coremods = coremods $1 " " $2 "\n"
-    else
-        mods[dist,ver] = mods[dist,ver] $1 " " $2 "\n"
+    if(dist == "perl") next
 
+    mods[dist,ver] = mods[dist,ver] $1 " " $2 "\n"
     if (lessthan(dists[dist], ver)) {
         dists[dist] = ver
         paths[dist] = $3
@@ -43,7 +37,7 @@ END {
 
     # Prints modules out in sorted order, too!
     while(getline<"cpandists" > 0) {
-        print $1 "\n" ($1 == "perl" ? coremods : mods[$1,$2]) >"cpanmods"
+        print $1 "\n" mods[$1,$2] >"cpanmods"
     }
 }
 

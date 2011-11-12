@@ -269,9 +269,6 @@ sub _distsofmods
 
 	return () if(@mods == 0);
 
-	use Time::HiRes qw(time);
-	my $beg = time;
-
 	my $var = $ENV{'PKGVAR'}
 		or die "$PROG: PKGVAR env variable is unset\n";
 	open(my $fh, '<', "$var/cpanmods")

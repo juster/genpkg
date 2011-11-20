@@ -17,13 +17,9 @@ $1 == "source" {
 END {
 	# remember that metas emit no output when they cant match
 	# a package.
-	if (NR == 0) exit 0
+	if (NR == 0 || !ver) exit 2
 
 	ORS="\n"
-	if (!ver) {
-		print prog ": wtf? pkgver is empty!" | "cat 1>&2"
-		exit 1
-	}
 	
 	# Replace any version strings in the source file with ${pkgver}.
 	gsub(/[.]/, "\\\\&", ver)
@@ -68,13 +64,13 @@ do
 	case $metaret in
 	0)	basicmeta $1
 		exit 0 ;;
-	1)	;; # loop
-	2)	echo "error: $flav encountered an error" 1>&2
-		exit 2 ;;
-	*)	echo "error: $flav returned error code $metaret" 1>&2
-		exit 2 ;;
+	1)	echo "makepkgmeta: $flav encountered an error" 1>&2
+		exit 1 ;;
+	2)	;; # loop
+	*)	echo "makepkgmeta: $flav returned error code $metaret" 1>&2
+		exit 1 ;;
 	esac
 done
 
-echo "error: no matching meta generator found for '$1'" 1>&2
+echo "makepkgmeta: no matching meta generator found for '$1'" 1>&2
 exit 1

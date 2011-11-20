@@ -10,25 +10,25 @@ vard=~/var
 if [ $# -lt 1 ]
 then
 	echo "usage: $prog [package name]" 1>&2
-	exit 1
+	exit 2
 fi
 
 if ! [ -d "$tweakd" ]
 then
 	echo "$prog: bad package tweaks dir: $tweakd" 1>&2
-	exit 2
+	exit 1
 fi
 
 if ! [ -d "$pkgd" ]
 then
 	echo "$prog: bad package dest dir: $pkgd" 1>&2
-	exit 2
+	exit 1
 fi
 
 if ! [ -d "$vard" ]
 then
 	echo "$prog: bad package var dir: $vard" 1>&2
-	exit 2
+	exit 1
 fi
 
 cwd=$(pwd)
@@ -40,12 +40,18 @@ do
 	cd "$pkgd/$pkg"
 
 	METABIN=$libd/metas PKGVAR=$vard makepkgmeta "$pkg" >PKGMETA
+	case $? in 1) rm PKGMETA ; exit 1 ;; esac
+
 	echo "Generated $pkgd/$pkg/PKGMETA"
 
 	twk=$libd/tweakd/$pkg
 	if [ -f "$twk" -a -r "$twk" ]
 	then
-		tweakmeta >PKGMETA.new <$twk
+		if ! tweakmeta >PKGMETA.new <$twk
+		then
+			rm PKGMETA.new
+			exit 1
+		fi
 		mv PKGMETA.new PKGMETA
 		echo "Tweaked PKGMETA with $tweakd/$pkg."
 	fi

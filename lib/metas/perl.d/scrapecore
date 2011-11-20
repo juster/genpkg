@@ -206,7 +206,8 @@ sub _delmatch
 sub coreonly
 {
 	my %mods = map { @$_ } @_;
-	my $path = "$ENV{'PKGVAR'}/cpanmods";
+	my $var = $ENV{'PKGVAR'} || "$ENV{'HOME'}/var";
+	my $path = "$var/cpanmods";
 	open(my $if, '<', $path) or die("open $path: $!");
 
 	my @dists;
@@ -232,6 +233,9 @@ die("$perldir is not a valid directory.\n") unless(-d $perldir);
 my @mods =
 	(CoreDist::findmods($perldir),
 	CoreLib::findmods($perldir));
+
+## Embedded modules without any files...
+push @mods, [qw/ Config 1/];
 
 @mods = coreonly(@mods);
 for my $mv (@mods){ print "@$mv\n"; }

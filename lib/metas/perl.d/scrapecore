@@ -205,7 +205,7 @@ sub _delmatch
 
 sub coreonly
 {
-	my (%mods) = map { @$_ } @_;
+	my %mods = map { @$_ } @_;
 	my $path = "$ENV{'PKGVAR'}/cpanmods";
 	open(my $if, '<', $path) or die("open $path: $!");
 

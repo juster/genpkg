@@ -24,7 +24,7 @@ sub matchdist
 		or err("$PROG: PKGVAR env variable is unset\n");
 
 	if(!-f "$var/cpandists" || -M "$var/cpandists" > 1) {
-		print STDERR "Refreshing local CPAN distribution list...";
+		print STDERR "$PROG: Refreshing local CPAN data...";
 		my $cwd = getcwd();
 		chdir($var) or die "chdir: $!";
 		system('fetchcpan');
@@ -36,7 +36,8 @@ sub matchdist
 	open(DISTS, '<', "$var/cpandists") or err("$PROG: open: $!");
 	while(<DISTS>) {
 		my @f = split;
-		next unless(lc($f[0]) eq lc($dist));
+		my $d = lc $f[0]; $d =~ tr/-_/--/s;
+		next unless($d eq lc($dist));
 		close(DISTS);
 		return ($f[0], $f[2]);
 	}
@@ -67,12 +68,19 @@ sub main
 	my $pkg = shift or die "Usage: $PROG [package name]\n";
 	my $dist = $pkg;
 
-	$dist = "app-$dist" if($dist =~ s/^perl-// == 0);
+	my $forcechk;
+	if($dist =~ s/^perl-// == 0){
+		$forcechk = 1;
+		$dist = "app-$dist";
+	}
 
 	STDERR->autoflush(1);
 	my ($realname, $cpath) = matchdist($dist);
 	unless($realname){
-		print STDERR "$PROG: failed to find perl dist similar to $dist\n";
+		unless($forcechk){
+			## Don't print errors unless perl- package was requested.
+			print STDERR qq{$PROG: failed to find perl dist similar to '$dist'\n};
+		}
 		return 2;
 	}
 	fetchdist($cpath);

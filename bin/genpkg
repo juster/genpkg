@@ -32,7 +32,6 @@ then
 fi
 
 cwd=$(pwd)
-set -e
 
 for pkg
 do
@@ -40,7 +39,12 @@ do
 	cd "$pkgd/$pkg"
 
 	METABIN=$libd/metas PKGVAR=$vard makepkgmeta "$pkg" >PKGMETA
-	case $? in 1) rm PKGMETA ; exit 1 ;; esac
+	case $? in
+	1)	cd ..
+		rm -r "$pkgd/$pkg"
+		echo "$prog: aborting." 1>&2
+		exit 1
+	esac
 
 	echo "Generated $pkgd/$pkg/PKGMETA"
 

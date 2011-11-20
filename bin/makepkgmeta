@@ -59,10 +59,12 @@ esac
 for flav in "$METABIN"/*
 do
 	[ -f "$flav" -a -x "$flav" ] || continue
-	PATH="$PATH:$flav.d" "$flav" $1 | lazysource
+	PATH="$PATH:$flav.d" "$flav" $1 >PKGMETA.tmp
 	metaret=$?
 	case $metaret in
 	0)	basicmeta $1
+		lazysource <PKGMETA.tmp
+		rm PKGMETA.tmp
 		exit 0 ;;
 	1)	echo "makepkgmeta: $flav encountered an error" 1>&2
 		exit 1 ;;

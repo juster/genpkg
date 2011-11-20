@@ -296,7 +296,7 @@ sub _distsofmods
 		for my $m (@lost){
 			print STDERR "$PROG: failed to find module $m\n";
 		}
-		exit 2;
+		exit 1;
 	}
 
 	return %dists;

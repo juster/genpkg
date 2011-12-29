@@ -1,6 +1,7 @@
-! perl-cpan AnyEvent
-+ optdepends perl-async-interrupt: Faster signal handling for some event loops.
++ optdepends perl-async-interrupt: signal handling for other event loops.
++ optdepends perl-net-ssleay: TLS/SSL connections with AnyEvent::Handle
++ optdepends perl-json-xs: send or receive JSON with AnyEvent::Handle
 + depends perl-ev>=4.00
 + depends perl-guard>=1.02
-+ depends perl-json-xs>=2.2
-+ depends perl-net-ssleay>=1.33
++ depends perl-async-interrupt>=1.0
+

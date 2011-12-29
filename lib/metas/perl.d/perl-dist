@@ -336,7 +336,7 @@ sub main
 
 	my $meta = loadmeta($dir);
 	my $desc = $meta->{'abstract'};
-	if(!$desc || $desc eq '~') {
+	if(!$desc || $desc eq '~' || $desc eq 'unknown') {
 		$meta->{'abstract'} = distdesc($dir, $info->{'mod'});
 	}
 

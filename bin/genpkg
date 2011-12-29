@@ -42,7 +42,7 @@ do
 	METABIN=$libd/metas PKGVAR=$vard makepkgmeta "$pkg" >PKGMETA
 	echo "Generated $pkgd/$pkg/PKGMETA"
 
-	twk=$libd/tweakd/$pkg
+	twk=$tweakd/$pkg
 	if [ -f "$twk" -a -r "$twk" ]
 	then
 		tweakmeta >PKGMETA.new <$twk

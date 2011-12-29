@@ -174,14 +174,19 @@ sub _reqs2deps
 	my ($prereqs) = @_;
 	my (@mods, %pkgdeps);
 
-	CPAN_DEP_LOOP:
+	# Filter out deps on 'perl' and any core modules that we can.
 	while(my ($name, $ver) = each(%$prereqs)) {
-		# Sometimes a perl version is given as a prerequisite
+		my $cver = $Module::CoreList::version{$]}{$name};
 		if($name eq 'perl') {
 			$pkgdeps{'perl'} = _perldepver($ver);
-			next CPAN_DEP_LOOP;
+		}elsif($cver && !$ver
+			|| version->parse($ver) > version->parse($cver)){
+			# Only add deps for core modules if we need a higher
+			# version than what is in the core for our perl interpreter.
+			;
+		}else{
+			push @mods, $name;
 		}
-		push @mods, $name;
 	}
 
 	my %dists = _distsofmods(@mods);

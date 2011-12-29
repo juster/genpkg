@@ -29,6 +29,8 @@ $1 == "pkgdesc" {
 	$2 = sprintf("\"%s\"", $2)
 }
 
+$1 == "pkgverfmt" { pkgverfmt = $2 }
+
 strfield[$1] { output[$1] = $2 }
 
 arrfield[$1] {
@@ -42,9 +44,14 @@ END {
 	print ""
 
 	OFS = "="; ORS = "\n";
-	for(i=1; i<=max; i++) {
+	for(i=1; i<=max; i++){
 		name = fields[i]
-		if(name in output) print name, output[name]
+		if(name in output){
+			if(name == "pkgver" && pkgverfmt){
+				output["pkgver"] = sprintf(pkgverfmt, output["pkgver"])
+			}
+			print name, output[name]
+		}
 	}
 }
 

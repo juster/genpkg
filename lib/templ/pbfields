@@ -38,6 +38,10 @@ arrfield[$1] {
 }
 
 END {
+    if(pkgverfmt){
+        output["pkgver"] = sprintf(pkgverfmt, output["pkgver"])
+    }
+
 	if(!maintainer && !packager) { packager = "Anonymous" }
 	if(maintainer) print "# Maintainer: " maintainer
 	else if(packager) print "# Packager: " packager
@@ -47,9 +51,6 @@ END {
 	for(i=1; i<=max; i++){
 		name = fields[i]
 		if(name in output){
-			if(name == "pkgver" && pkgverfmt){
-				output["pkgver"] = sprintf(pkgverfmt, output["pkgver"])
-			}
 			print name, output[name]
 		}
 	}

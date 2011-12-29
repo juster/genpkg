@@ -48,7 +48,7 @@ sub dist_pkgname
 
 	# Package names should be lowercase and consist of alphanumeric
 	# characters only (and hyphens!)...
-	$distname =  lc($distname);
+	$distname = lc($distname);
 	$distname =~ tr/_+/--/;
 	$distname =~ tr/-a-z0-9//cd; # Delete all other chars
 	$distname =~ tr/-/-/s;
@@ -103,7 +103,7 @@ sub _merge
 	MERGE_LOOP:
 	while(my ($pkg, $ver) = each(%$right_deps)) {
 		if($left_deps->{$pkg}) {
-			my $leftver  = version->parse($left_deps->{$pkg});
+			my $leftver = version->parse($left_deps->{$pkg});
 			my $rightver = version->parse($ver);
 			next MERGE_LOOP if $leftver > $rightver;
 		}
@@ -122,8 +122,8 @@ sub _mergedups
 	for my $name (keys %$left) {
 		my $rver = delete($right->{$name}) or next;
 		my $lver = $left->{$name};
-		my $lvo  = ($lver ? version->parse($lver) : 0);
-		my $rvo  = ($rver ? version->parse($rver) : 0);
+		my $lvo = ($lver ? version->parse($lver) : 0);
+		my $rvo = ($rver ? version->parse($rver) : 0);
 		$left->{$name} = ($lvo > $rvo ? $lvo : $rvo);
 	}
 
@@ -322,7 +322,7 @@ use Digest::SHA ();
 sub main
 {
 	my $distpath = shift() or die "Usage: $PROG [path to cpan dist file]\n";
-	my $dir  = dirname($distpath);
+	my $dir = dirname($distpath);
 	my $file = basename($distpath);
 	my $info = distinfo($file);
 
@@ -432,9 +432,9 @@ sub loadmeta
 		my $meta = do { local $/; <$metafh> };
 		close($metafh);
 
-		$meta = ($metaext eq 'json' ? decode_json($meta)    :
-				 $metaext eq 'yml'  ? YAML::XS::Load($meta) :
-				 die "internal error: unknown \$metaext: $metaext");
+		$meta = ($metaext eq 'json' ? decode_json($meta) :
+			$metaext eq 'yml' ? YAML::XS::Load($meta) :
+			die "internal error: unknown \$metaext: $metaext");
 
 		upgrademeta($meta);
 		return $meta;

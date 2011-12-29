@@ -86,7 +86,7 @@ http://search.cpan.org/CPAN/authors/id/$cpath
 
 END_META
 
-	my $file = $cpath; $file =~ s{^.*/}{};
+	my $file = $cpath; $file =~ s{.*/}{};
 	system('perl-dist', $file);
 	return $?;
 }

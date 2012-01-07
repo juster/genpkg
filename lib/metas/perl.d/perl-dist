@@ -273,40 +273,61 @@ sub _distsofmods
 	my (@mods) = @_;
 
 	return () if(@mods == 0);
+	@mods = _nocore(@mods);
 
-	my $var = $ENV{'PKGVAR'}
-		or die "$PROG: PKGVAR env variable is unset\n";
+	my $var = _vardir();
 	open(my $fh, '<', "$var/cpanmods")
 		or die "$PROG: failed to open $var/cpanmods: $!";
 
-	my (@hunted, %dists) = @mods;
+	my %mods = map { ($_ => 1) } @mods;
+	my %dists;
 	local $/ = '';
 
 	RECLOOP:
 	while(my $rec = <$fh>) {
-		my ($dist, @modvers) = split(/\n/, $rec);
-		for (@modvers) {
-			my ($m) = split;
+		last RECLOOP unless(keys %mods > 0);
 
-			CMPLOOP:
-			for my $i (0 .. $#hunted) {
-				next CMPLOOP unless($hunted[$i] eq $m);
-				$dists{$m} = $dist;
-				splice @hunted, $i, 1;
-				last RECLOOP if(@hunted == 0);
-				last CMPLOOP;
-			}
+		my($dist, @mvs) = split(/\n/, $rec);
+		MODLOOP:
+		for(@mvs){
+			my($m) = split;
+			my $fnd = delete($mods{$m}) or next;
+			$dists{$m} = $dist;
 		}
 	}
 
-	if (@hunted) {
-		for my $lost (@hunted) {
-			print STDERR "$PROG: failed to find module $lost\n";
+	my @lost = keys %mods;
+	if(@lost){
+		for my $m (@lost){
+			print STDERR "$PROG: failed to find module $m\n";
 		}
-		exit 2;
+		exit 1;
 	}
 
 	return %dists;
+}
+
+sub _nocore
+{
+	my (@mods) = @_;
+
+	my $path = _vardir() . '/coremods';
+	open(my $if, '<', $path) or die "$PROG: open $path: $!";
+
+	my %mods = map { ($_ => 1) } @mods;
+	while(<$if>){
+		my ($m) = split;
+		delete $mods{$m};
+	}
+
+	close($if);
+	return keys %mods;
+}
+
+sub _vardir
+{
+	return $ENV{'PKGVAR'}
+		or die "$PROG: PKGVAR env variable is unset\n";
 }
 
 #-----------------------------------------------------------------------------

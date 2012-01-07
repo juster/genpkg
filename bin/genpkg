@@ -40,7 +40,10 @@ do
 	cd "$pkgd/$pkg"
 
 	METABIN=$libd/metas PKGVAR=$vard makepkgmeta "$pkg" >PKGMETA
-	echo "Generated $pkgd/$pkg/PKGMETA"
+    case $? in
+    0)	echo "Generated $pkgd/$pkg/PKGMETA" ;;
+    *)	exit $?
+    esac
 
 	twk=$tweakd/$pkg
 	if [ -f "$twk" -a -r "$twk" ]

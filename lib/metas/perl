@@ -8,6 +8,7 @@ use IO::Handle; # for autoflush
 use Cwd;
 
 my $PROG = 'perl';
+my %BADNAMES = ('perl-libwww' => 'libwww-perl');
 
 sub err
 {
@@ -64,10 +65,13 @@ sub fetchdist
 
 sub main
 {
-	my $pkg = shift or die "Usage: $PROG [package name]\n";
-	my $dist = $pkg;
+	my $dist = shift or die "Usage: $PROG [package name]\n";
 
-	$dist = "app-$dist" if($dist =~ s/^perl-// == 0);
+	if($BADNAMES{$dist}){
+		$dist = $BADNAMES{$dist};
+	}elsif($dist =~ s/^perl-// == 0){
+		$dist = "app-$dist";
+	}
 
 	STDERR->autoflush(1);
 	my ($realname, $cpath) = matchdist($dist);

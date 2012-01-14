@@ -7,34 +7,34 @@ use File::Fetch;
 use IO::Handle; # for autoflush
 use Cwd;
 
-my $PROG = 'perl';
+my $PROG = 'metas/perl';
 my %BADNAMES = ('perl-libwww' => 'libwww-perl');
 
 sub err
 {
-	print STDERR @_, "\n";
-	exit 2;
+	print STDERR "$PROG: ", @_, "\n";
+	exit 1;
 }
 
 sub matchdist
 {
-	my ($dist) = @_;
+	my($dist) = @_;
 
 	# Refresh our local list of distributions if needed.
 	my $var = $ENV{'PKGVAR'}
-		or err("$PROG: PKGVAR env variable is unset\n");
+		or err('PKGVAR env variable is unset');
 
 	if(!-f "$var/cpandists" || -M "$var/cpandists" > 1) {
-		print STDERR "$PROG: Refreshing local CPAN data...";
+		print STDERR "$PROG: Refreshing local CPAN data... ";
 		my $cwd = getcwd();
-		chdir($var) or die "chdir: $!";
-		system('fetchcpan');
-		err("FAILED") unless($? == 0);
+		chdir $var or die "chdir: $!";
+		system 'fetchcpan';
+		die "FAILED\n" unless($? == 0);
 		print STDERR "OK\n";
-		chdir($cwd) or die "chdir: $!";
+		chdir $cwd or die "chdir: $!";
 	}
 
-	open(DISTS, '<', "$var/cpandists") or err("$PROG: open: $!");
+	open(DISTS, '<', "$var/cpandists") or err("open: $!");
 	while(<DISTS>) {
 		my @f = split;
 		my $d = lc $f[0]; $d =~ tr/-_/--/s;
@@ -48,7 +48,7 @@ sub matchdist
 
 sub fetchdist
 {
-	my ($cpath) = @_;
+	my($cpath) = @_;
 	my $file = $cpath; $file =~ s{^.*/}{};
 	if(-f $file) {
 		print STDERR "$file already downloaded.\n";
@@ -60,28 +60,32 @@ sub fetchdist
 
 	print STDERR "Downloading $file... ";
 	my $ff = File::Fetch->new('uri' => $url);
-	err("FAILED") unless($ff->fetch());
+	die "FAILED\n" unless($ff->fetch());
 	print STDERR "OK\n";
 }
 
 sub main
 {
-	my $dist = shift or die "Usage: $PROG [package name]\n";
+	my $dist = shift or die "usage: $PROG [package name]\n";
 
+	my $guess;
 	if($BADNAMES{$dist}){
 		$dist = $BADNAMES{$dist};
 	}elsif($dist =~ s/^perl-// == 0){
+		$guess = 1;
 		$dist = "app-$dist";
 	}
 
 	STDERR->autoflush(1);
 	my ($realname, $cpath) = matchdist($dist);
 	unless($realname){
-		unless($forcechk){
-			## Don't print errors unless perl- package was requested.
-			print STDERR qq{$PROG: failed to find perl dist similar to '$dist'\n};
+		if($guess){
+			return 2
+		}else{
+			## Return a hard error to makepkgmeta if perl- package.
+			err(qq{failed to find perl dist similar to '$dist'});
+			return 1
 		}
-		return 2;
 	}
 	fetchdist($cpath);
 
@@ -95,7 +99,7 @@ http://search.cpan.org/CPAN/authors/id/$cpath
 END_META
 
 	my $file = $cpath; $file =~ s{.*/}{};
-	system('perl-dist', $file);
+	system 'perl-dist' => $file;
 	return $?;
 }
 

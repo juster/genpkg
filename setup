@@ -59,7 +59,7 @@ genpkg)	md ~/bin
 tweaks)	md ~/pkg/tweaks/
 	for t in tweaks/*
 	do
-		echo "$t" | grep -q '~$' && continue
+		case $t in *~) continue ;; esac
 		echo ~/pkg/"$t"
 		cp "$t" ~/pkg/"$t"
 	done

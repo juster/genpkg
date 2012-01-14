@@ -1,0 +1,71 @@
+#!/bin/sh
+
+set -e
+umask 022
+prog=install
+binfiles=(makepkgbuild makepkgmeta genpkg tweakmeta)
+metas=(perl perl.d/ perl.d/fetchcpan perl.d/perl-dist perl.d/scrapecore)
+templs=(pbfields perl-pkg)
+
+md()
+{
+	d="$1"
+	case "$d" in
+	'')	return 1 ;;
+	*/)	;;
+	*)	d="$d/" # mostly for pretty printing
+	esac
+	[ -d "$d" ] || mkdir -p "$d"
+	echo "$d"
+}
+
+ins()
+{
+	case "$1" in
+	*/)	md "$2/$1" ;;
+	*)	install -m 755 "$1" "$2/$1"
+		echo "$2/$1"
+	esac
+}
+
+case "$1" in
+'')	cat <<EOF
+Run "$prog genpkg" to install genpkg & friends into ~/genpkg and ~/bin.
+Run "$prog tweaks" to install tweaks into ~/pkg/tweaks.
+EOF
+	;;
+genpkg)	md ~/bin
+	for pkg in ${binfiles[@]}
+	do
+		ins "bin/$pkg" ~
+	done
+
+	md ~/.genpkg
+	md ~/.genpkg/lib
+	md ~/.genpkg/lib/metas
+	for m in ${metas[@]}
+	do
+		ins "lib/metas/$m" ~/.genpkg
+	done
+
+	md ~/.genpkg/lib/templ/
+	for t in ${templs[@]}
+	do
+		ins "lib/templ/$t" ~/.genpkg
+	done
+
+	md ~/.genpkg/var
+	;;
+tweaks)	md ~/pkg/tweaks/
+	for t in tweaks/*
+	do
+		echo "$t" | grep -q '~$' && continue
+		echo ~/pkg/"$t"
+		cp "$t" ~/pkg/"$t"
+	done
+	;;
+*)	echo "$prog: unrecognized argument: $1"
+	exit 1
+esac
+
+exit 0

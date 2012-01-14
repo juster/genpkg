@@ -24,15 +24,15 @@ i" ;;
 		edin="/^ *$func() *{
 /^[ \t]*cd/
 a" ;;
-	*)	die 2 unknown editpb operation: $op
+	*)	die 1 "unknown editpb operation: $op"
 	esac
 
-	txt=$(awk -v r="$regexp" -v f="$func" 'BEGIN { FS = "\n"; RS = "" }
-		$1 ~ r { for (i = 2; i <= NF; i++) print $i }' \
-		PKGMETA | sed 's/^/    /')
-	[ X"$txt" = X ] && return 0
+	txt=$(awk -v r="$regexp" 'BEGIN { FS = "\n"; RS = "" }
+	  $1 ~ r { for (i = 2; i <= NF; i++) print $i }' PKGMETA |\
+	  sed 's/^/    /')
+	[ "$txt" ] || return 0
 
-	cat <<END | ed -s PKGBUILD >/dev/null
+	cat << END | ed -s PKGBUILD >/dev/null
 $edin
 $txt
 .
@@ -41,43 +41,31 @@ END
 	return $?
 }
 
-if ! [ -r PKGMETA ]
-then
-	die 1 "PKGMETA could not be read."
-fi
+[ -r PKGMETA ] || die 1 "PKGMETA could not be read."
 
-case "$TDIR" in
-'')	die 1 "TDIR env variable is not set."
-esac
+tdir=~/.genpkg/lib/templ
+[ -d "$tdir" ] || die 1 "template dir ($tdir) not found."
 
-ttcmds=$(awk '
-	BEGIN { FS = "\n"; RS = "" }
-	$1 == "template" { for (i = 2; i <= NF; i++) print $i }' PKGMETA)
+tcmd=$(awk 'BEGIN { FS="\n"; RS="" } $1 == "template" { print $2 }' PKGMETA)
+[ "$tcmd" ] || die 1 "PKGMETA is missing 'template' entry."
 
-oifs=$IFS
-IFS='
-'
-for ttcmd in "$ttcmds"
-do
-	IFS=' '
-	set -- $ttcmd
-	cmd="$TDIR/$1"
-	if ! [ -f "$cmd" -a -x "$cmd" ]
-	then
-		die 2 "Unknown template command: $cmd"
-	fi
-done
-IFS=$oifs
+set -- $tcmd
+cmd="$tdir/$1"
+[ -f "$cmd" -a -x "$cmd" ] \
+  || die 2 "template command ($1) not in template dir ($tdir)"
 
-ttcmd="cat PKGMETA$(echo "$ttcmds" | sed "s!^! | $TDIR/!" | tr -d '\n')"
+# Generate the PKGBUILD using basic pbfields script plus custom template.
+"$tdir/pbfields" < PKGMETA > PKGBUILD || die 1 "pbfields returned error ${?}."
+"$tdir"/$tcmd < PKGMETA >> PKGBUILD || die 1 "template pipeline ($tcmd) failed"
 
-"$TDIR/pbfields" <PKGMETA >PKGBUILD
-eval $ttcmd >>PKGBUILD || die 2 "template pipeline ($ttcmd) failed"
-
+# Prepand/append text to the package, check, or build functions.
 for func in package check build
 do
 	for op in append prepend
 	do
-		editpb $op $func || die 2 "error $? when trying to $op to ${func}()"
+		editpb $op $func \
+		  || die 2 "error $? when trying to $op to ${func}()"
 	done
 done
+
+exit 0

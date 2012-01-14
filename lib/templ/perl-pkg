@@ -17,8 +17,9 @@ my %ACTIONS_OF =
 
 my %FUNCFMTS;
 $FUNCFMTS{'build'} = <<'END_FMT';
-build() {
-  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
+build()
+(
+    export PERL_MM_USE_DEFAULT=1 PERL5LIB=""                 \
       PERL_AUTOINSTALL=--skipdeps                            \
       PERL_MM_OPT="INSTALLDIRS=vendor DESTDIR='$pkgdir'"     \
       PERL_MB_OPT="--installdirs vendor --destdir '$pkgdir'" \
@@ -26,17 +27,16 @@ build() {
 
     cd "$_distdir"
 %s
-  )
-}
+)
 END_FMT
 
 $FUNCFMTS{'check'} = <<'END_FMT';
-check() {
-  ( export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
+check()
+(
+    export PERL_MM_USE_DEFAULT=1 PERL5LIB=""
     cd "$_distdir"
 %s
-  )
-}
+)
 END_FMT
 
 $FUNCFMTS{'package'} = <<'END_FMT';

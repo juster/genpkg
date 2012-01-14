@@ -38,16 +38,17 @@ do
 	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
 	cd "$pkgd/$pkg"
 
-	METABIN=$libd/metas PKGVAR=$vard makepkgmeta "$pkg" >PKGMETA
-	case $? in
-	0)	echo "Generated $pkgd/$pkg/PKGMETA" ;;
-	*)	exit $?
-	esac
+	if METABIN="$libd/metas" PKGVAR="$vard" makepkgmeta "$pkg" > PKGMETA
+	then
+		echo "Generated $pkgd/$pkg/PKGMETA"
+	else
+		exit $?
+	fi
 
-	twk=$tweakd/$pkg
+	twk="$tweakd/$pkg"
 	if [ -f "$twk" -a -r "$twk" ]
 	then
-		if ! tweakmeta >PKGMETA.new <$twk
+		if ! tweakmeta > PKGMETA.new < "$twk"
 		then
 			rm PKGMETA.new
 			exit 1
@@ -56,6 +57,10 @@ do
 		echo "Tweaked PKGMETA with $tweakd/$pkg."
 	fi
 
-	TDIR=$libd/templ makepkgbuild
-	echo "Generated $pkgd/$pkg/PKGBUILD"
+	if TDIR="$libd/templ" makepkgbuild
+	then
+		echo "Generated $pkgd/$pkg/PKGBUILD"
+	else
+		exit $?
+	fi
 done

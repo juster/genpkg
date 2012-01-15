@@ -2,7 +2,8 @@
 
 prog=genpkg
 
-libd=~/lib/genpkg
+metad=~/.genpkg/metas
+templd=~/.genpkg/templ
 tweakd=~/pkg/tweaks
 pkgd=~/pkg/dest
 vard=~/var
@@ -38,7 +39,7 @@ do
 	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
 	cd "$pkgd/$pkg"
 
-	if METABIN="$libd/metas" PKGVAR="$vard" makepkgmeta "$pkg" > PKGMETA
+	if METABIN="$metad" PKGVAR="$vard" makepkgmeta "$pkg" > PKGMETA
 	then
 		echo "Generated $pkgd/$pkg/PKGMETA"
 	else
@@ -57,7 +58,7 @@ do
 		echo "Tweaked PKGMETA with $tweakd/$pkg."
 	fi
 
-	if TDIR="$libd/templ" makepkgbuild
+	if TDIR="$templd" makepkgbuild
 	then
 		echo "Generated $pkgd/$pkg/PKGBUILD"
 	else

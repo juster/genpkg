@@ -41,17 +41,16 @@ genpkg)	md ~/bin
 	done
 
 	md ~/.genpkg
-	md ~/.genpkg/lib
-	md ~/.genpkg/lib/metas
+	md ~/.genpkg/metas
 	for m in ${metas[@]}
 	do
-		ins "lib/metas/$m" ~/.genpkg
+		ins "metas/$m" ~/.genpkg
 	done
 
-	md ~/.genpkg/lib/templ/
+	md ~/.genpkg/templ/
 	for t in ${templs[@]}
 	do
-		ins "lib/templ/$t" ~/.genpkg
+		ins "templ/$t" ~/.genpkg
 	done
 
 	md ~/.genpkg/var

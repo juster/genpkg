@@ -43,20 +43,20 @@ END
 
 [ -r PKGMETA ] || die 1 "PKGMETA could not be read."
 
-tdir=~/.genpkg/lib/templ
-[ -d "$tdir" ] || die 1 "template dir ($tdir) not found."
+[ "$TDIR" ] || die 1 "TDIR env. var is unset."
+[ -d "$TDIR" ] || die 1 "template dir ($TDIR) not found."
 
 tcmd=$(awk 'BEGIN { FS="\n"; RS="" } $1 == "template" { print $2 }' PKGMETA)
 [ "$tcmd" ] || die 1 "PKGMETA is missing 'template' entry."
 
 set -- $tcmd
-cmd="$tdir/$1"
+cmd="$TDIR/$1"
 [ -f "$cmd" -a -x "$cmd" ] \
-  || die 2 "template command ($1) not in template dir ($tdir)"
+  || die 2 "template command ($1) not in template dir ($TDIR)"
 
 # Generate the PKGBUILD using basic pbfields script plus custom template.
-"$tdir/pbfields" < PKGMETA > PKGBUILD || die 1 "pbfields returned error ${?}."
-"$tdir"/$tcmd < PKGMETA >> PKGBUILD || die 1 "template pipeline ($tcmd) failed"
+"$TDIR/pbfields" < PKGMETA > PKGBUILD || die 1 "pbfields returned error ${?}."
+"$TDIR"/$tcmd < PKGMETA >> PKGBUILD || die 1 "template pipeline ($tcmd) failed"
 
 # Prepand/append text to the package, check, or build functions.
 for func in package check build

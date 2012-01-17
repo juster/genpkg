@@ -60,9 +60,9 @@ do
 		echo "Tweaked PKGDATA with $twk."
 	fi
 
-	if TDIR="$templd" makepkgbuild
+	if TDIR="$templd" mkpkgbuild 
 	then
-		echo "Generated $pkgd/$pkg/PKGBUILD"
+		echo "Generated PKGBUILD."
 	else
 		exit $?
 	fi

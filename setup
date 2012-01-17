@@ -3,7 +3,7 @@
 set -e
 umask 022
 prog=setup
-binfiles=(makepkgbuild mkpkgdata genpkg tweakmeta)
+binfiles=(mkpkgbuild mkpkgdata genpkg tweakmeta)
 metas=(perl perl.d/ perl.d/fetchcpan perl.d/perl-dist perl.d/scrapecore)
 templs=(pbfields perl-pkg)
 
@@ -29,7 +29,7 @@ ins()
 }
 
 case "$1" in
-'')	cat <<EOF
+'')	cat <<EOF 1>&2
 Run "$prog genpkg" to install genpkg & friends into ~/genpkg and ~/bin.
 Run "$prog tweaks" to install tweaks into ~/pkg/tweaks.
 EOF
@@ -63,7 +63,7 @@ tweaks)	md ~/pkg/tweaks/
 		cp "$t" ~/pkg/"$t"
 	done
 	;;
-*)	echo "$prog: unrecognized argument: $1"
+*)	echo "$prog: unrecognized argument: $1" 1>&2
 	exit 1
 esac
 

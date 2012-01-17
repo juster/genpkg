@@ -2,24 +2,24 @@
 ##
 # tweakmeta
 #
-# First read a PKGMETA file in the current directory, loading its values.
+# First read a PKGDATA file in the current directory, loading its values.
 # Next read a PKGTWEAK file from standard input.
-# The PKGTWEAK file tells us how to modify the PKGMETA data.
-# The modified PKGMETA is printed to standard output.
+# The PKGTWEAK file tells us how to modify the PKGDATA data.
+# The modified PKGDATA is printed to standard output.
 #
 # Justin Davis <jrcd83@gmail.com>
 
 BEGIN {
 	PROG = "tweakmeta"
-	if (system("test -r PKGMETA") != 0) {
-		print PROG ": PKGMETA file could not be read." | "cat 1>&2"
+	if (system("test -r PKGDATA") != 0) {
+		print PROG ": PKGDATA file could not be read." | "cat 1>&2"
 		exit(errcode = 2)
 	}
 
 	FS = "\n"; RS = ""
-	while (getline<"PKGMETA" > 0)
+	while (getline<"PKGDATA" > 0)
 		for (i = 2; i <= NF; i++) pushval($1, $i)
-	close("PKGMETA")
+	close("PKGDATA")
 	FS = " "; RS = "\n"
 }
 

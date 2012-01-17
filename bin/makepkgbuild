@@ -28,7 +28,7 @@ a" ;;
 	esac
 
 	txt=$(awk -v r="$regexp" 'BEGIN { FS = "\n"; RS = "" }
-	  $1 ~ r { for (i = 2; i <= NF; i++) print $i }' PKGMETA |\
+	  $1 ~ r { for (i = 2; i <= NF; i++) print $i }' PKGDATA |\
 	  sed 's/^/    /')
 	[ "$txt" ] || return 0
 
@@ -41,13 +41,13 @@ END
 	return $?
 }
 
-[ -r PKGMETA ] || die 1 "PKGMETA could not be read."
+[ -r PKGDATA ] || die 1 "PKGDATA could not be read."
 
 [ "$TDIR" ] || die 1 "TDIR env. var is unset."
 [ -d "$TDIR" ] || die 1 "template dir ($TDIR) not found."
 
-tcmd=$(awk 'BEGIN { FS="\n"; RS="" } $1 == "template" { print $2 }' PKGMETA)
-[ "$tcmd" ] || die 1 "PKGMETA is missing 'template' entry."
+tcmd=$(awk 'BEGIN { FS="\n"; RS="" } $1 == "template" { print $2 }' PKGDATA)
+[ "$tcmd" ] || die 1 "PKGDATA is missing 'template' entry."
 
 set -- $tcmd
 cmd="$TDIR/$1"
@@ -55,8 +55,8 @@ cmd="$TDIR/$1"
   || die 2 "template command ($1) not in template dir ($TDIR)"
 
 # Generate the PKGBUILD using basic pbfields script plus custom template.
-"$TDIR/pbfields" < PKGMETA > PKGBUILD || die 1 "pbfields returned error ${?}."
-"$TDIR"/$tcmd < PKGMETA >> PKGBUILD || die 1 "template pipeline ($tcmd) failed"
+"$TDIR/pbfields" < PKGDATA > PKGBUILD || die 1 "pbfields returned error ${?}."
+"$TDIR"/$tcmd < PKGDATA >> PKGBUILD || die 1 "template pipeline ($tcmd) failed"
 
 # Prepand/append text to the package, check, or build functions.
 for func in package check build

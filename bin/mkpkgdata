@@ -1,6 +1,6 @@
 #!/bin/sh
 
-prog=makepkgmeta
+prog=mkpkgdata
 
 lazysource()
 {
@@ -9,7 +9,7 @@ BEGIN { FS = "\n"; RS = ""; OFS = ORS = "\n\n" }
 $1 == "pkgver" { ver = $2 }
 $1 == "source" {
 	len = NF - 1
-	for (i = 2; i <= NF; i++) sources[i - 1] = $i
+	for(i = 2; i <= NF; i++) sources[i - 1] = $i
 	next
 }
 1 # print everything but sources
@@ -17,7 +17,7 @@ $1 == "source" {
 END {
 	# remember that metas emit no output when they cant match
 	# a package.
-	if (NR == 0 || !ver) exit 2
+	if(NR == 0 || !ver) exit 2
 
 	ORS="\n"
 	
@@ -25,7 +25,7 @@ END {
 	gsub(/[.]/, "\\\\&", ver)
 
 	print "source"
-	for(i = 1; i <= len; i++) {
+	for(i = 1; i <= len; i++){
 		gsub(ver, "${pkgver}", sources[i])
 		print sources[i]
 	}
@@ -47,32 +47,40 @@ basicmeta()
 }
 
 case $# in
-0)	echo "Usage: $prog [pkgname]" 1>&2
+0)	echo "usage: $prog [package name]" 1>&2
 	exit 1
 esac
 
 case "$METABIN" in
 '')	echo "$prog: set METABIN before calling $prog" 1>&2
-	exit 2
+	exit 1
 esac
 
+tmp="/tmp/$prog.$$"
 for flav in "$METABIN"/*
 do
 	[ -f "$flav" -a -x "$flav" ] || continue
-	PATH="$PATH:$flav.d" "$flav" $1 >PKGMETA.tmp
+	PATH="$PATH:$flav.d" "$flav" "$1" > "$tmp"
+	trap 'rm "$tmp"' 1 2 15
 	metaret=$?
+	if [ "$metaret" -eq 0 ]
+	then
+		basicmeta "$1"
+		lazysource < "$tmp"
+		rm "$tmp"
+		exit 0
+	fi
+	
+	rm "$tmp"
+	trap '' 1 2 5
 	case $metaret in
-	0)	basicmeta $1
-		lazysource <PKGMETA.tmp
-		rm PKGMETA.tmp
-		exit 0 ;;
-	1)	echo "makepkgmeta: $flav encountered an error" 1>&2
+	1)	echo "$prog: $flav encountered an error" 1>&2
 		exit 1 ;;
 	2)	;; # loop
-	*)	echo "makepkgmeta: $flav returned error code $metaret" 1>&2
+	*)	echo "$prog: $flav returned error code $metaret" 1>&2
 		exit 1 ;;
 	esac
 done
 
-echo "makepkgmeta: no matching meta generator found for '$1'" 1>&2
+echo "$prog: no matching meta generator found for '$1'" 1>&2
 exit 1

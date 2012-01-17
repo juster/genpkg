@@ -2,8 +2,8 @@
 
 set -e
 umask 022
-prog=install
-binfiles=(makepkgbuild makepkgmeta genpkg tweakmeta)
+prog=setup
+binfiles=(makepkgbuild mkpkgdata genpkg tweakmeta)
 metas=(perl perl.d/ perl.d/fetchcpan perl.d/perl-dist perl.d/scrapecore)
 templs=(pbfields perl-pkg)
 

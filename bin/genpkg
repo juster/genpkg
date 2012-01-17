@@ -6,7 +6,7 @@ metad=~/.genpkg/metas
 templd=~/.genpkg/templ
 tweakd=~/pkg/tweaks
 pkgd=~/pkg/dest
-vard=~/var
+vard=~/.genpkg/var
 
 if [ $# -lt 1 ]
 then
@@ -39,9 +39,10 @@ do
 	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
 	cd "$pkgd/$pkg"
 
-	if METABIN="$metad" PKGVAR="$vard" makepkgmeta "$pkg" > PKGMETA
+	echo "$pkgd/$pkg"
+	if METABIN="$metad" PKGVAR="$vard" mkpkgdata "$pkg" > PKGDATA
 	then
-		echo "Generated $pkgd/$pkg/PKGMETA"
+		echo "Generated PKGDATA."
 	else
 		exit $?
 	fi
@@ -49,13 +50,14 @@ do
 	twk="$tweakd/$pkg"
 	if [ -f "$twk" -a -r "$twk" ]
 	then
-		if ! tweakmeta > PKGMETA.new < "$twk"
+		if ! tweakmeta < "$twk" > PKGDATA.new
 		then
-			rm PKGMETA.new
+			echo "$prog: tweakmeta returned error: $?" 1>&2
+			rm PKGDATA.new
 			exit 1
 		fi
-		mv PKGMETA.new PKGMETA
-		echo "Tweaked PKGMETA with $tweakd/$pkg."
+		mv PKGDATA.new PKGDATA
+		echo "Tweaked PKGDATA with $twk."
 	fi
 
 	if TDIR="$templd" makepkgbuild

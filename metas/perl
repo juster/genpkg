@@ -100,7 +100,7 @@ END_META
 
 	my $file = $cpath; $file =~ s{.*/}{};
 	system 'perl-dist' => $file;
-	return $?;
+	return $? >> 8;
 }
 
 exit main(@ARGV);

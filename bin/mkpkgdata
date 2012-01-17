@@ -60,20 +60,18 @@ tmp="/tmp/$prog.$$"
 for flav in "$METABIN"/*
 do
 	[ -f "$flav" -a -x "$flav" ] || continue
-	PATH="$PATH:$flav.d" "$flav" "$1" > "$tmp"
 	trap 'rm "$tmp"' 1 2 15
+	PATH="$PATH:$flav.d" "$flav" "$1" > "$tmp"
 	metaret=$?
-	if [ "$metaret" -eq 0 ]
-	then
-		basicmeta "$1"
+	case "$metaret" in
+	0)	basicmeta "$1"
 		lazysource < "$tmp"
-		rm "$tmp"
-		exit 0
-	fi
+	esac
 	
 	rm "$tmp"
 	trap '' 1 2 5
-	case $metaret in
+	case "$metaret" in
+	0)	exit 0 ;;
 	1)	echo "$prog: $flav encountered an error" 1>&2
 		exit 1 ;;
 	2)	;; # loop

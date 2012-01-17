@@ -3,7 +3,7 @@
 use warnings 'FATAL' => 'all';
 use strict;
 
-my $PROG = 'perl-dist';
+my $PROG = 'metas/perl.d/perl-dist';
 
 package Convert;
 
@@ -312,6 +312,15 @@ sub _nocore
 	my (@mods) = @_;
 
 	my $path = _vardir() . '/coremods';
+	unless(-f $path){
+		print STDERR "$PROG: error: $path is missing.
+******************************************************************************
+  You must generate it with genpkg's metas/perl.d/scrapecore script. Run it
+  against the source distribution of perl that is currently being packaged.
+******************************************************************************
+";
+		exit 1;
+	}
 	open(my $if, '<', $path) or die "$PROG: open $path: $!";
 
 	my %mods = map { ($_ => 1) } @mods;

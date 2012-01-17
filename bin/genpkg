@@ -42,7 +42,7 @@ do
 	echo "$pkgd/$pkg"
 	if METABIN="$metad" PKGVAR="$vard" mkpkgdata "$pkg" > PKGDATA
 	then
-		echo "Generated PKGDATA."
+		echo PKGDATA
 	else
 		exit $?
 	fi
@@ -57,13 +57,15 @@ do
 			exit 1
 		fi
 		mv PKGDATA.new PKGDATA
-		echo "Tweaked PKGDATA with $twk."
+		echo "Tweaked PKGDATA with $twk." 1>&2
 	fi
 
 	if TDIR="$templd" mkpkgbuild 
 	then
-		echo "Generated PKGBUILD."
+		echo PKGBUILD
 	else
 		exit $?
 	fi
+
+	echo
 done

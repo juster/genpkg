@@ -1,1 +1,3 @@
 + optdepends perl-lwp-protocol-https: for https:// url schemes
+- depends perl-http-message
++ depends perl-http-message>=6

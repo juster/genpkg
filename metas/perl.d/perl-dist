@@ -5,7 +5,15 @@ use strict;
 
 my $PROG = 'metas/perl.d/perl-dist';
 
+sub DBG {}
+if(exists $ENV{'GENDBG'}){
+	no warnings 'redefine';
+	*DBG = sub { print STDERR "$PROG: DBG: ", @_ };
+}
+
 package Convert;
+
+*DBG = *main::DBG;
 
 use Module::CoreList;
 use LWP::UserAgent qw();
@@ -176,14 +184,18 @@ sub _reqs2deps
 
 	# Filter out deps on 'perl' and any core modules that we can.
 	while(my ($name, $ver) = each(%$prereqs)) {
+		DBG("requires $name $ver\n");
 		my $cver = $Module::CoreList::version{$]}{$name};
+
 		if($name eq 'perl') {
 			$pkgdeps{'perl'} = _perldepver($ver);
-		}elsif($cver && !$ver
-			|| version->parse($ver) > version->parse($cver)){
-			# Only add deps for core modules if we need a higher
-			# version than what is in the core for our perl interpreter.
-			;
+		}elsif($cver){
+			DBG("perl core has $name $cver\n");
+			my $vobj = eval { version->parse($ver) };
+			$cver = version->parse($cver);
+			if($vobj > $cver){
+				push @mods, $name;
+			}
 		}else{
 			push @mods, $name;
 		}
@@ -191,6 +203,7 @@ sub _reqs2deps
 
 	my %dists = _distsofmods(@mods);
 	while(my ($mod, $dist) = each %dists) {
+		DBG("$mod is provided by $dist\n");
 		my $pkgname = dist_pkgname($dist);
 		my $ver = $prereqs->{$mod};
 
@@ -203,6 +216,7 @@ sub _reqs2deps
 		# (because versions specified for other modules in the dist
 		# are 0)
 		$pkgdeps{$pkgname} ||= ($ver ? dist_pkgver($ver) : 0);
+		DBG("depends on $pkgname>=$pkgdeps{$pkgname}\n");
 	}
 
 	return \%pkgdeps;
@@ -223,9 +237,12 @@ sub prereqs
 		my $reqs = $prereqs->{$perl}{'requires'};
 		my $deps; $deps = _reqs2deps($reqs) if($reqs);
 
-		next unless(keys(%$deps));
-		if($pkgdeps{$arch}) { _merge($pkgdeps{$arch}, $deps); }
-		else { $pkgdeps{$arch} = $deps; }
+		next unless(keys %$deps);
+		if($pkgdeps{$arch}){
+			_merge($pkgdeps{$arch}, $deps);
+		}else{
+			$pkgdeps{$arch} = $deps;
+		}
 	}
 
 	# ArchLinux now has a separate array for dependencies that we only

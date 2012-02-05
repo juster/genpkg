@@ -4,6 +4,7 @@ use warnings 'FATAL' => 'all';
 use strict;
 
 my $PROG = 'metas/perl.d/perl-dist';
+my $FUNCPROG = 'perl-dist-funcs';
 
 sub DBG {}
 if(exists $ENV{'GENDBG'}){
@@ -43,20 +44,20 @@ my %OVERRIDE =
 
 sub dist2pkg
 {
-	my ($name, $ver) = @_;
+	my($name, $ver) = @_;
 	return dist_pkgname($name), dist_pkgver($ver);
 }
 
 # Copied from CPANPLUS::Dist::Arch
 sub dist_pkgname
 {
-	my ($distname) = @_;
+	my($distname) = @_;
 
-	return $OVERRIDE{$distname} if(exists($OVERRIDE{$distname}));
+	return $OVERRIDE{$distname} if(exists $OVERRIDE{$distname});
 
 	# Package names should be lowercase and consist of alphanumeric
 	# characters only (and hyphens!)...
-	$distname = lc($distname);
+	$distname = lc $distname;
 	$distname =~ tr/_+/--/;
 	$distname =~ tr/-a-z0-9//cd; # Delete all other chars
 	$distname =~ tr/-/-/s;
@@ -66,7 +67,7 @@ sub dist_pkgname
 	$distname =~ s/-\z//;
 
 	die qq{Dist name '$distname' completely violates packaging standards}
-		if(length($distname) == 0);
+		if(length $distname == 0);
 
 	# Don't prefix the package with perl- if it IS perl...
 	$distname = "perl-$distname" unless($distname eq 'perl');
@@ -76,7 +77,7 @@ sub dist_pkgname
 
 sub dist_pkgver
 {
-	my ($version) = @_;
+	my($version) = @_;
 
 	# Remove developer versions because pacman has no special logic
 	# to handle comparing them to regular versions such as perl uses.
@@ -96,7 +97,7 @@ sub dist_pkgver
 # Decide if the dist. is named after the module.
 sub _ismainmod
 {
-	my ($mod_name, $dist_name) = @_;
+	my($mod_name, $dist_name) = @_;
 
 	$mod_name =~ tr/:/-/s;
 	return lc($mod_name) eq lc($dist_name);
@@ -106,11 +107,11 @@ sub _ismainmod
 # Merges the right-hand deps into the left-hand deps.
 sub _merge
 {
-	my ($left_deps, $right_deps) = @_;
+	my($left_deps, $right_deps) = @_;
 
 	MERGE_LOOP:
-	while(my ($pkg, $ver) = each(%$right_deps)) {
-		if($left_deps->{$pkg}) {
+	while(my($pkg, $ver) = each %$right_deps){
+		if($left_deps->{$pkg}){
 			my $leftver = version->parse($left_deps->{$pkg});
 			my $rightver = version->parse($ver);
 			next MERGE_LOOP if $leftver > $rightver;
@@ -125,10 +126,10 @@ sub _merge
 # Merge duplicate deps into $left always storing the greatest version there.
 sub _mergedups
 {
-	my ($left, $right) = @_;
+	my($left, $right) = @_;
 
-	for my $name (keys %$left) {
-		my $rver = delete($right->{$name}) or next;
+	for my $name (keys %$left){
+		my $rver = delete $right->{$name} or next;
 		my $lver = $left->{$name};
 		my $lvo = ($lver ? version->parse($lver) : 0);
 		my $rvo = ($rver ? version->parse($rver) : 0);
@@ -140,12 +141,12 @@ sub _mergedups
 
 sub _filterdeps(&$)
 {
-	my ($fsub, $deps) = @_;
+	my($fsub, $deps) = @_;
 	my %fed;
 
 	my @pkgs = keys(%$deps);
 	for my $dname (grep { $fsub->() } @pkgs){
-		my $dver = delete($deps->{$dname});
+		my $dver = delete $deps->{$dname};
 		$fed{$dname} = $dver if(defined $dver);
 	}
 
@@ -163,7 +164,7 @@ sub _yankcheckers
 # form that the official ArchLinux perl package uses.
 sub _perldepver
 {
-	my ($perlver) = @_;
+	my($perlver) = @_;
 
 	# Fix perl-style vstrings which have a leading "v".
 	return $perlver if($perlver =~ s/\Av//);
@@ -171,7 +172,7 @@ sub _perldepver
 
 	# Re-apply the missing trailing zeroes.
 	my $patch = $3;
-	$patch .= q{0} x (3 - length($patch));
+	$patch .= q{0} x (3 - length $patch);
 	return sprintf('%d.%d.%d', $1, $2, $patch);
 }
 
@@ -179,8 +180,8 @@ sub _perldepver
 # Translates CPAN module dependencies into ArchLinux package dependencies.
 sub _reqs2deps
 {
-	my ($prereqs) = @_;
-	my (@mods, %pkgdeps);
+	my($prereqs) = @_;
+	my(@mods, %pkgdeps);
 
 	# Filter out deps on 'perl' and any core modules that we can.
 	while(my ($name, $ver) = each(%$prereqs)) {
@@ -224,16 +225,17 @@ sub _reqs2deps
 
 sub prereqs
 {
-	my ($pkgname, $prereqs) = @_;
+	my($pkgname, $prereqs) = @_;
 
 	# maps perl names for different dependencies to ArchLinux's names
 	my %namemap = ('configure' => 'makedepends',
-				   'build' => 'makedepends',
-				   'test' => 'checkdepends',
-				   'runtime' => 'depends');
+	  'build' => 'makedepends',
+	  'test' => 'checkdepends',
+	  'runtime' => 'depends',
+	);
 
 	my %pkgdeps;
-	while (my ($perl, $arch) = each(%namemap)) {
+	while (my($perl, $arch) = each(%namemap)) {
 		my $reqs = $prereqs->{$perl}{'requires'};
 		my $deps; $deps = _reqs2deps($reqs) if($reqs);
 
@@ -248,14 +250,16 @@ sub prereqs
 	# ArchLinux now has a separate array for dependencies that we only
 	# need for checking (aka "testing"). Older perl METAs do not
 	# have this separated. Force any test modules to be checkdepends.
-	if(!$pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/) {
+	if(!$pkgdeps{'checkdepends'} && $pkgname !~ /\Aperl-test-/){
 		my $checkdeps = {};
-		_merge($checkdeps, _yankcheckers($pkgdeps{$_})) for(qw/makedepends depends/);
+		for(qw/makedepends depends/){
+			_merge($checkdeps, _yankcheckers($pkgdeps{$_})) 
+		}
 		$pkgdeps{'checkdepends'} = $checkdeps;
 	}
 
 	# We at least require perl, if nothing else.
-	unless(grep { scalar(keys(%$_)) > 0 } values(%pkgdeps)) {
+	unless(grep { scalar keys %$_ > 0 } values %pkgdeps){
 		$pkgdeps{'depends'}{'perl'} = 0;
 	}
 
@@ -263,7 +267,7 @@ sub prereqs
 	_mergedups(@pkgdeps{'depends', 'makedepends'});
 
 	# Convert all deps into arrays of strings.
-	for my $deptype (keys(%pkgdeps)) {
+	for my $deptype (keys(%pkgdeps)){
 		$pkgdeps{$deptype} = _stringify($pkgdeps{$deptype});
 	}
 
@@ -273,13 +277,13 @@ sub prereqs
 #---HELPER FUNCTION---
 sub _stringify
 {
-	my ($deps) = @_;
+	my($deps) = @_;
 
 	my @depstrs;
-	for my $pkg (sort(keys(%$deps))) {
+	for my $pkg (sort keys %$deps){
 		my $ver = $deps->{$pkg};
 		my $str = ($ver eq '0' ? $pkg : "$pkg>=$ver");
-		push(@depstrs, $str);
+		push @depstrs, $str;
 	}
 
 	return \@depstrs;
@@ -287,21 +291,21 @@ sub _stringify
 
 sub _distsofmods
 {
-	my (@mods) = @_;
+	my(@mods) = @_;
 
 	return () if(@mods == 0);
 	@mods = _nocore(@mods);
 
 	my $var = _vardir();
-	open(my $fh, '<', "$var/cpanmods")
-		or die "$PROG: failed to open $var/cpanmods: $!";
+	open my $fh, '<', "$var/cpanmods"
+	  or die "$PROG: failed to open $var/cpanmods: $!";
 
 	my %mods = map { ($_ => 1) } @mods;
 	my %dists;
 	local $/ = '';
 
 	RECLOOP:
-	while(my $rec = <$fh>) {
+	while(my $rec = <$fh>){
 		last RECLOOP unless(keys %mods > 0);
 
 		my($dist, @mvs) = split(/\n/, $rec);
@@ -314,19 +318,17 @@ sub _distsofmods
 	}
 
 	my @lost = keys %mods;
-	if(@lost){
-		for my $m (@lost){
-			print STDERR "$PROG: failed to find module $m\n";
-		}
-		exit 1;
-	}
+	return %dists unless(@lost);
 
-	return %dists;
+	for my $m (@lost){
+		print STDERR "$PROG: failed to find module $m\n";
+	}
+	exit 1;
 }
 
 sub _nocore
 {
-	my (@mods) = @_;
+	my(@mods) = @_;
 
 	my $path = _vardir() . '/coremods';
 	unless(-f $path){
@@ -338,15 +340,15 @@ sub _nocore
 ";
 		exit 1;
 	}
-	open(my $if, '<', $path) or die "$PROG: open $path: $!";
+	open my $if, '<', $path or die "$PROG: open $path: $!";
 
 	my %mods = map { ($_ => 1) } @mods;
 	while(<$if>){
-		my ($m) = split;
+		my($m) = split;
 		delete $mods{$m};
 	}
 
-	close($if);
+	close $if;
 	return keys %mods;
 }
 
@@ -361,7 +363,7 @@ sub _vardir
 package main;
 
 use File::Basename qw(basename dirname);
-use File::Spec::Functions qw(catfile catdir);
+use File::Spec::Functions qw(catfile catdir rel2abs);
 use File::Find qw(find);
 
 use JSON::XS qw(decode_json); # for META.json
@@ -371,56 +373,79 @@ use Pod::Select (); # search POD for description
 use Digest::MD5 (); # for md5sums & sha512sums
 use Digest::SHA ();
 
+sub printdata
+{
+	my($pbvars) = @_;
+	print "options\n!emptydirs\n\n";
+	printmeta($pbvars);
+	return;
+}
+
+sub printfuncs
+{
+	my($ddir) = @_;
+	my $dtype = (-f "$ddir/Build.PL" ? "MB" : "MM");
+	exec $FUNCPROG => $dtype
+	  or die "$PROG: $FUNCPROG failed to execute!\n";
+}
+
 sub main
 {
-	my $distpath = shift() or die "Usage: $PROG [path to cpan dist file]\n";
+	my $distpath = shift or die "Usage: $PROG [path to cpan dist file]\n";
+	$distpath = rel2abs($distpath);
 	my $dir = dirname($distpath);
 	my $file = basename($distpath);
 	my $info = distinfo($file);
 
 	chsrcdir(catdir($dir, 'src'), $file);
-	$dir = extractdist($file);
+	my $distdir = extractdist($file);
 
-	my $meta = loadmeta($dir);
+	my $meta = loadmeta($distdir);
 	my $desc = $meta->{'abstract'};
-	if(!$desc || $desc eq '~' || $desc eq 'unknown') {
-		$meta->{'abstract'} = distdesc($dir, $info->{'mod'});
+	if(!$desc || $desc eq '~' || $desc eq 'unknown'){
+		$meta->{'abstract'} = distdesc($distdir, $info->{'mod'});
 	}
 
-	my ($name, $ver) = Convert::dist2pkg(@{$info}{'name', 'ver'});
+	my($name, $ver) = Convert::dist2pkg(@{$info}{'name', 'ver'});
 	my $deps = Convert::prereqs($name, $meta->{'prereqs'});
 
 	my %pbvars =
 		('pkgver'  => $ver,
 		 'pkgdesc' => $meta->{'abstract'},
-		 'arch' => (xsdist($dir) ? ['i686', 'x86_64'] : 'any'),
+		 'arch' => (xsdist($distdir) ? ['i686', 'x86_64'] : 'any'),
 		 'md5sums' => md5sums($file),
 		 'sha512sums' => sha512sums($file),
-		 'distdir' => $dir,
+		 'distdir' => $distdir,
 		 %$deps,
 		 );
 
-	# Since this is a perl distribution, use the perl-pkg template.
-	printf("template\nperl-pkg %s\n\n", (-f "$dir/Build.PL" ? "MB" : "MM"));
-	print("options\n!emptydirs\n\n");
+	print STDERR "DBG: \$dir = $dir\n";
+	chdir $dir or die "chdir: $!";
 
-	printmeta(\%pbvars);
-	return 0;
+	close STDOUT or die "close STDOUT: $!";
+	open STDOUT, '>', 'PKGDATA' or die "open PKGDATA: $!";
+	printdata(\%pbvars);
+
+	close STDOUT or die "close STDOUT: $!";
+	open STDOUT, '>', 'PKGFUNC', or die "open PKGFUNC: $!";
+	exit printfuncs($dir);
 }
 
 # Create the src/ directory and tarball symlink. Then chdir into it.
 
 sub chsrcdir
 {
-	my ($srcdir, $distfile) = @_;
+	my($srcdir, $distfile) = @_;
 
-	if (-e $srcdir) {
-		system("rm", "-fr", $srcdir) == 0 or die "failed to rm $srcdir\n";
+	if(-e $srcdir){
+		system 'rm' => ('-fr', $srcdir);
+		die "failed to rm $srcdir\n" unless($? == 0);
 	}
 	mkdir $srcdir or die "mkdir $srcdir: $!";
-	chdir($srcdir) or die "chdir $srcdir: $!";
+	chdir $srcdir or die "chdir $srcdir: $!";
 	unless(-f $distfile) {
-		symlink(catfile('..', $distfile), $distfile) or die "symlink $distfile: $!";
+		symlink(catfile('..', $distfile), $distfile)
+		  or die "symlink $distfile: $!";
 	}
 
 	return $srcdir;
@@ -428,11 +453,11 @@ sub chsrcdir
 
 sub distinfo
 {
-	my ($distfile) = @_;
+	my($distfile) = @_;
 
-	my @c = split(/-/, $distfile);
-	my $ver = pop(@c);
-	my $name = join(q{-}, @c);
+	my @c = split /-/, $distfile;
+	my $ver = pop @c;
+	my $name = join q{-}, @c;
 	my $mod = $name;
 	$mod =~ s/-/::/g;
 	return { 'name' => $name, 'ver' => $ver, 'mod' => $mod };
@@ -440,53 +465,52 @@ sub distinfo
 
 sub extractdist
 {
-	my ($file) = @_;
+	my($file) = @_;
 
-	system("bsdtar -xf $file");
+	system 'bsdtar' => ('-xf', $file);
 	die "$PROG: bsdtar failed to extract $file\n" unless($? == 0);
 
-	opendir(my $srcdir, '.') or die "opendir: $!";
-	my @dirs = grep { -d $_ && !/\A[.]/ } readdir($srcdir);
-	closedir($srcdir);
+	opendir my $srcdir, '.' or die "opendir: $!";
+	my @dirs = grep { -d $_ && !/\A[.]/ } readdir $srcdir;
+	closedir $srcdir;
 
-	die("$PROG: many dirs (@dirs) inside the tarball $file\n")
-		if(@dirs > 1);
-	die("$PROG: no dirs found in tarball $file\n") if(@dirs == 0);
+	die "$PROG: many dirs (@dirs) inside the tarball $file\n" if(@dirs > 1);
+	die "$PROG: no dirs found in tarball $file\n" if(@dirs == 0);
 	return $dirs[0];
 }
 
 sub printmeta
 {
-	my ($pbvars) = @_;
-	while(my ($name, $val) = each(%$pbvars)) {
-		if(!defined($val) || $val eq q{}) {
-			warn("$PROG: warning: $name is undefined\n");
+	my($pbvars) = @_;
+	while(my($name, $val) = each %$pbvars) {
+		if(!defined $val || $val eq q{}) {
+			warn "$PROG: warning: $name is undefined\n";
 			$val = q{};
 		}
-		print($name, "\n");
-		print("$_\n") for (ref $val ? @$val : $val);
-		print("\n");
+		print $name, "\n";
+		print "$_\n" for (ref $val ? @$val : $val);
+		print "\n";
 	}
 
 	# TODO: autodetect license type
-	printf("license\n%s\n\n", join("\n", qw/PerlArtistic GPL/));
+	printf("license\n%s\n\n", join "\n", qw/PerlArtistic GPL/);
 }
 
 sub loadmeta
 {
-	my ($distdir) = @_;
+	my($distdir) = @_;
 
-	for my $metaext (qw/json yml/) {
+	for my $metaext (qw/json yml/){
 		my $path = "$distdir/META.$metaext";
-		next unless -f $path;
+		next unless(-f $path);
 
-		open(my $metafh, '<', $path) or die "open: $!";
+		open my $metafh, '<', $path or die "open: $!";
 		my $meta = do { local $/; <$metafh> };
-		close($metafh);
+		close $metafh;
 
 		$meta = ($metaext eq 'json' ? decode_json($meta) :
-			$metaext eq 'yml' ? YAML::XS::Load($meta) :
-			die "internal error: unknown \$metaext: $metaext");
+		  $metaext eq 'yml' ? YAML::XS::Load($meta) :
+		  die "internal error: unknown \$metaext: $metaext");
 
 		upgrademeta($meta);
 		return $meta;
@@ -497,12 +521,13 @@ sub loadmeta
 
 sub upgrademeta
 {
-	my ($meta) = @_;
+	my($meta) = @_;
 
-	return if(exists($meta->{'prereqs'}));
+	return if(exists $meta->{'prereqs'});
 
 	my $prereqs;
-	$prereqs->{'configure'}{'requires'} = delete($meta->{'configure_requires'});
+	$prereqs->{'configure'}{'requires'}
+	  = delete $meta->{'configure_requires'};
 	$prereqs->{'build'}{'requires'} = delete($meta->{'build_requires'});
 	$prereqs->{'runtime'}{'requires'} = delete($meta->{'requires'});
 
@@ -512,9 +537,10 @@ sub upgrademeta
 
 sub xsdist
 {
-	my ($dir) = @_;
+	my($dir) = @_;
 	my $isxs;
-	find({ 'wanted' => sub { $isxs = 1 if(/[.]xs$/) }, 'no_chdir' => 1 }, $dir);
+	find({ 'wanted' => sub { $isxs = 1 if(/[.]xs$/) }, 'no_chdir' => 1 },
+	  $dir);
 	return $isxs;
 }
 
@@ -522,13 +548,13 @@ sub xsdist
 
 sub distdesc
 {
-	my ($dir, $modname) = @_;
+	my($dir, $modname) = @_;
 	return _poddesc($dir, $modname) || _readmedesc($dir, $modname);
 }
 
 sub _poddesc
 {
-	my ($dir, $modname) = @_;
+	my($dir, $modname) = @_;
 
 	my $podselect = Pod::Select->new;
 	$podselect->select('NAME');
@@ -544,18 +570,18 @@ sub _poddesc
 	my @possible = glob("$dir/{lib/,}{$moddir/,}$modfile.{pod,pm}");
 
 	PODSEARCH:
-	for my $podpath (@possible) {
+	for my $podpath (@possible){
 		next PODSEARCH unless(-f $podpath);
 
 		# Read the NAME section of the POD into a scalar.
 		my $namesect = q{};
-		open(my $podfile, '<', $podpath) or next PODSEARCH;
-		open(my $podout, '>', \$namesect) or die "open: $!";
+		open my $podfile, '<', $podpath or next PODSEARCH;
+		open my $podout, '>', \$namesect or die "open: $!";
 
 		$podselect->parse_from_filehandle($podfile, $podout);
 
-		close($podfile);
-		close($podout) or die "close: $!";
+		close $podfile;
+		close $podout or die "close: $!";
 
 		next PODSEARCH unless($namesect);
 
@@ -573,13 +599,13 @@ sub _poddesc
 #---HELPER FUNCTION---
 sub _readmedesc
 {
-	my ($dir, $modname) = @_;
+	my($dir, $modname) = @_;
 
 	my $path = catfile($dir, 'README');
 	return undef unless(-f $path);
-	open(my $fh, '<', $path) or die "open: $!";
+	open my $fh, '<', $path or die "open: $!";
 
-	while (<$fh>) {
+	while(<$fh>){
 		chomp;
 		next unless((/\ANAME/ ... /\A[A-Z]+/)
 			&& / \A \s* ${modname} [\s\-]+ (.+) \z /x);
@@ -595,8 +621,10 @@ sub _readmedesc
 sub md5sums
 {
 	return [ map {
-		open(my $fh, '<', $_) or die "open: $!";
+		open my $fh, '<', $_ or die "open: $!";
 		my $md5 = Digest::MD5->new()->addfile($fh)->hexdigest;
+		close $fh;
+		$md5;
 	} @_ ]
 }
 

@@ -3,9 +3,10 @@
 set -e
 umask 022
 prog=setup
-binfiles=(mkpkgbuild mkpkgdata genpkg tweakmeta)
-metas=(perl perl.d/ perl.d/fetchcpan perl.d/perl-dist perl.d/scrapecore)
-templs=(pbfields perl-pkg)
+binfiles=(genpkg mkpkgmeta modpkgmeta pbfields mergepbfields emitpkgtree)
+metas=(perl perl.d/
+	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-dist-funcs
+	perl.d/scrapecore)
 
 md()
 {
@@ -46,13 +47,6 @@ genpkg)	md ~/bin
 	do
 		ins "metas/$m" ~/.genpkg
 	done
-
-	md ~/.genpkg/templ/
-	for t in ${templs[@]}
-	do
-		ins "templ/$t" ~/.genpkg
-	done
-
 	md ~/.genpkg/var
 	;;
 tweaks)	md ~/pkg/tweaks/

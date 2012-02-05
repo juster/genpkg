@@ -1,0 +1,67 @@
+#!/bin/sh
+
+prog=mkpkgmeta
+
+err()
+{
+	echo "$prog: $*" 1>&2
+	exit 1
+}
+
+basicmeta()
+{
+	printf "pkgname\n%s\n\n" "$pkgname"
+	printf "pkgrel\n%d\n\n" "${PKGREL:-1}"
+	printf "packager\n%s\n\n" "${PACKAGER:-Anonymous}"
+	
+	if [ "$MAINTAINER" ]
+	then
+		printf "maintainer\n%s\n\n" "$MAINTAINER"
+	fi
+
+	return 0
+}
+
+prependmeta()
+{
+	if basicmeta | cat - "$1" > "$1.new"
+	then
+		mv "$1.new" "$1"
+		return 0
+	else
+		rm "$1.new"
+		return 1
+	fi
+}
+
+case $# in
+0)	echo "usage: $prog [package name]" 1>&2
+	exit 1
+esac
+
+case "$METABIN" in
+'')	err "set METABIN before calling $prog"
+esac
+
+tmp="/tmp/$prog.$$"
+for flav in "$METABIN"/*
+do
+	pkgname="$1"
+	[ -f "$flav" -a -x "$flav" ] || continue
+	PATH="$PATH:$flav.d" "$flav" "$pkgname"
+	metaret=$?
+	
+	case "$metaret" in
+	0)	if prependmeta PKGDATA
+		then
+			exit 0
+		else
+			err "failed to prepend to PKGDATA"
+		fi ;;
+	1)	err "$flav encountered an error" ;;
+	2)	;; # loop
+	*)	err "$flav returned error code $metaret" ;;
+	esac
+done
+
+err "no matching meta generator found for '$1'"

@@ -39,33 +39,20 @@ do
 	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
 	cd "$pkgd/$pkg"
 
-	echo "$pkgd/$pkg"
-	if METABIN="$metad" PKGVAR="$vard" mkpkgdata "$pkg" > PKGDATA
+	if METABIN="$metad" PKGVAR="$vard" mkpkgmeta "$pkg"
 	then
-		echo PKGDATA
+		echo "$pkgd/$pkg"
+		echo "Generated PKGDATA and PKGTREE." 1>&2
 	else
 		exit $?
 	fi
 
 	twk="$tweakd/$pkg"
-	if [ -f "$twk" -a -r "$twk" ]
+	if [ -f "$twk" -a -r "$twk" ] && modpkgmeta
 	then
-		if ! tweakmeta < "$twk" > PKGDATA.new
-		then
-			echo "$prog: tweakmeta returned error: $?" 1>&2
-			rm PKGDATA.new
-			exit 1
-		fi
-		mv PKGDATA.new PKGDATA
-		echo "Tweaked PKGDATA with $twk." 1>&2
+		echo "Modified metapackage." 1>&2
 	fi
 
-	if TDIR="$templd" mkpkgbuild 
-	then
-		echo PKGBUILD
-	else
-		exit $?
-	fi
-
-	echo
+	mergepbfields | emitpkgtree || exit $?
 done
+

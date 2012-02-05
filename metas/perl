@@ -89,7 +89,8 @@ sub main
 	}
 	fetchdist($cpath);
 
-	print <<"END_META";
+	open my $fh, '>', 'PKGDATA' or die "open: $!";
+	print $fh <<"END_META";
 url
 https://metacpan.org/release/$realname
 
@@ -97,6 +98,7 @@ source
 http://search.cpan.org/CPAN/authors/id/$cpath
 
 END_META
+	close $fh;
 
 	my $file = $cpath; $file =~ s{.*/}{};
 	system 'perl-dist' => $file;

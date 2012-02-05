@@ -1,0 +1,101 @@
+#!/usr/bin/env perl
+
+use warnings 'FATAL' => 'all';
+use strict;
+
+my $PROG = 'perl-dist-funcs';
+
+my %BODYFOR =
+	('MM', {
+		'build'	=> [
+		  q{/usr/bin/perl Makefile.PL }
+		  . q{DESTDIR="$pkgdir" INSTALLDIRS=vendor},
+		  q{make},
+		],
+		'check'	=> [ q{make test} ],
+		'package' => [ q{make install} ],
+	 },
+	'MB', {
+		'build'	=> [
+		  q{/usr/bin/perl Build.PL }
+		  . q{--destdir "$pkgdir" --installdirs vendor},
+		  q{./Build},
+		],
+		'check'	=> [ q{./Build test} ],
+		'package' => [ q{./Build install} ],
+	});
+
+my %FUNC;
+$FUNC{'build'}{'intro'} = <<'END_INTRO';
+cd "$_distdir"
+PERL_MM_USE_DEFAULT=1 PERL_AUTOINSTALL=--skipdeps MODULEBUILDRC=/dev/null
+export PERL_MM_USE_DEFAULT PERL_AUTOINSTALL MODULEBUILDRC
+unset PERL_MM_OPT PERL_MB_OPT PERL5LIB
+END_INTRO
+
+$FUNC{'check'}{'intro'} = <<'END_INTRO';
+cd "$_distdir"
+PERL_MM_USE_DEFAULT=1
+export PERL_MM_USE_DEFAULT
+unset PERL_MM_OPT PERL_MB_OPT PERL5LIB
+END_INTRO
+
+$FUNC{'package'}{'intro'} = <<'END_INTRO';
+cd "$_distdir"
+unset PERL_MM_OPT PERL_MB_OPT PERL5LIB
+END_INTRO
+
+$FUNC{'package'}{'end'} = <<'END_END';
+find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+END_END
+
+my $PBEND = <<'END_END';
+# Local Variables:
+# mode: shell-script
+# sh-basic-offset: 2
+# End:
+# vim:set ts=2 sw=2 et:
+END_END
+
+sub printfunc
+{
+    my($name, $func) = @_;
+    print "BEGNODE $name\n";
+    for my $sect (qw/intro body end/){
+        if(exists $func->{$sect}){
+            my $txt = $func->{$sect};
+            $txt .= "\n" unless($txt =~ /\n\z/);
+            print "BEGNODE $sect\n", $txt, "ENDNODE $sect\n";
+        }
+    }
+    print "ENDNODE $name\n";
+    return;
+}
+
+sub printfuncs
+{
+    my($btype) = @_;
+    my $acts = $BODYFOR{$btype} or die "$PROG: unknown build type: $btype";
+
+    print "BEGNODE PKGBUILD\n", "BEGNODE body\n";
+    for my $f (keys %FUNC){
+        $FUNC{$f}{'body'} = join q{}, map { "$_\n" } @{$acts->{$f}};
+        printfunc($f, $FUNC{$f});
+    }
+    print "ENDNODE body\n";
+    print "BEGNODE end\n", $PBEND, "ENDNODE end\n";
+    print "ENDNODE PKGBUILD\n";
+    return;
+}
+
+sub main
+{
+    if(@_ == 0 || ($_[0] ne 'MM' && $_[0] ne 'MB')){
+        print STDERR qq{usage: $PROG ["MM" or "MB"] > PKGFUNCS\n};
+        return 1;
+    }
+    printfuncs(shift);
+    return 0;
+}
+
+exit main(@ARGV);

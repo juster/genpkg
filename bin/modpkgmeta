@@ -1,0 +1,74 @@
+#!/usr/bin/env io
+
+PFieldVal := Object clone
+PFieldVal do(
+	stringValue := nil
+	ownerField := nil
+
+	moveTo := method(newOwner,
+		ownerField removeValue(self)
+		ownerField = newOwner addValue(self)
+		self
+	)
+	matches := method(start,
+		stringValue beginsWithSeq(start)
+	)
+	asString := method(stringValue)
+)
+
+PFieldValMux := Object clone
+PFieldValMux do(
+	init := method(
+		self fieldVals := List clone
+	)
+	addValue := method(fv,
+		fieldVals append(fv)
+		self
+	)
+	moveTo := method(destField,
+		fieldVals foreach(fv,
+			fv moveTo(destField)
+		)
+		self
+	)
+	asList := method(
+		fieldVals
+	)
+)
+
+PField := Object clone
+PField do(
+	init := method(
+		self fieldVals := List clone
+	)
+	match := method(
+		mux := PFieldValMux clone
+		call evalArgs foreach(arg,
+			fieldVals foreach(fv,
+				fv matches(arg) ifTrue(mux addValue(fv))
+			)
+		)
+		mux
+	)
+	addValue := method(newFV,
+		fieldVals append(newFV)
+		newFV ownerField = self
+		self
+	)
+	removeValue := method(fv,
+		fieldVals remove(fv)
+		self
+	)
+)
+
+depends := PField clone
+list("foo", "bar") foreach(str,
+	val := PFieldVal clone
+	val stringValue = str
+	depends addValue(val)
+)
+
+checkdepends := PField clone
+depends match("foo", "bar") moveTo(checkdepends)
+checkdepends fieldVals foreach(fv, fv asString println)
+checkdepends println

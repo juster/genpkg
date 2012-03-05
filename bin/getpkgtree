@@ -8,15 +8,11 @@ then
 	exit 2
 fi
 
-if ! [ -d "$1" ]
+if ! [ -d PKGTREE ]
 then
-	echo "$prog: package file does not exist: $1" 1>&2
-	exit 101
+	echo "$prog: PKGTREE directory does not exist" 1>&2
+	exit 100
 fi
-if ! [ -d "$1/$2" ]
-then
-	echo "$prog: section does not exist: $2" 1>&2
-	exit 102
-fi
-
-find "$1/$2" -maxdepth 1 -type f | sort | xargs cat
+[ -d "PKGTREE/$1" ] || exit 101
+[ -d "PKGTREE/$1/$2" ] || exit 101
+find "PKGTREE/$1/$2" -maxdepth 1 -type f | sort | xargs cat

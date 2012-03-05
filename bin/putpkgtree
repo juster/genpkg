@@ -2,25 +2,27 @@
 
 prog=putpkgtree
 
-err()
-{
-	code="$1"
-	shift
-	echo $@ 1>&2
-	exit "$code"
-}
-
 if [ "$#" -ne 3 ]
 then
 	echo "usage: $prog [file] [section] ['beg'/'body'/'end'] < [text to append]" 1>&2
 	exit 2
 fi
 
-[ -d "$1" ] || err 101 "$prog: package file does not exist: $1"
+case "$3" in
+beg|body|end) ;;
+*)	echo "$prog: third parameter must be 'beg', 'body', or 'end'" 1>&2
+	exit 2
+esac
+
+if ! [ -d PKGTREE ]
+then
+	echo "$prog: PKGTREE directory does not exist" 1>&2
+	exit 100
+fi
+cd PKGTREE
+
+[ -d "$1" ] || mkdir "$1"
 cd "$1"
-
-[ -d "$2" ] || err 102 "$prog: section does not exist: $2" 1>&2
+[ -d "$2" ] || mkdir "$2"
 cd "$2"
-
-[ -f "$3" ] || err 103 "$prog: subsection does not exist: $3"
 cat >> "$3"

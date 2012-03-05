@@ -1,0 +1,22 @@
+#!/bin/sh
+
+prog=getpkgtree
+
+if [ "$#" -ne 2 ]
+then
+	echo "usage: $prog [file] [section]"
+	exit 2
+fi
+
+if ! [ -d "$1" ]
+then
+	echo "$prog: package file does not exist: $1" 1>&2
+	exit 101
+fi
+if ! [ -d "$1/$2" ]
+then
+	echo "$prog: section does not exist: $2" 1>&2
+	exit 102
+fi
+
+find "$1/$2" -maxdepth 1 -type f | sort | xargs cat

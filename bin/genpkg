@@ -8,6 +8,45 @@ tweakd=~/pkg/tweaks
 pkgd=~/pkg/dest
 vard=~/.genpkg/var
 
+mergefile()
+{
+	fname="$1"
+	shift
+
+	if [ -f "$fname.$$" ]
+	then
+		echo "$prog: error: temp file already exists: $fname.$$" 1>&2
+		return 1
+	fi
+
+	while [ "$#" -gt 0 ]
+	do
+		sect="$1"
+		shift
+		getpkgtree "$fname" "$sect" >> "$fname.$$"
+
+		case "$?" in
+		0)	;;
+		101)	echo "$prog: error: missing file in PKGTREE: $fname" 1>&2
+			return 101 ;;
+		102)	continue ;; # empty section so don't echo a newline below
+		*)	echo "$prog: unknown error from getpkgtree: $?" 1>&2
+			return 1 ;;
+		esac
+
+		[ "$#" -gt 0 ] && echo >> "$fname.$$"
+	done
+
+	if du "$fname.$$" | awk '$1 == 0 { exit 1 }'
+	then
+		mv "$fname.$$" "$fname"
+		return 0
+	else
+		rm "$fname.$$"
+		return 1
+	fi
+}
+
 if [ $# -lt 1 ]
 then
 	echo "usage: $prog [package name]" 1>&2
@@ -32,27 +71,31 @@ then
 	exit 1
 fi
 
-cwd=$(pwd)
-
 for pkg
 do
 	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
 	cd "$pkgd/$pkg"
 
+	if [ -d PKGTREE ]
+	then
+		echo "$prog: warning: removing old PKGTREE" 1>&2
+		rm -rf PKGTREE
+	fi
+	mkdir PKGTREE
+
 	if METABIN="$metad" PKGVAR="$vard" mkpkgmeta "$pkg"
 	then
 		echo "$pkgd/$pkg"
-		echo "Generated PKGDATA and PKGTREE." 1>&2
 	else
-		exit $?
+		exit "$?"
 	fi
 
-	twk="$tweakd/$pkg"
-	if [ -f "$twk" -a -r "$twk" ] && modpkgmeta
-	then
-		echo "Modified metapackage." 1>&2
-	fi
+	#twk="$tweakd/$pkg"
+	#if [ -f "$twk" -a -r "$twk" ] && modmetapkg
+	#then
+	#	echo "Modified metapackage." 1>&2
+	#fi
 
-	mergepbfields | emitpkgtree || exit $?
+	pbfields < PKGDATA | putpkgtree PKGBUILD prefix body || exit "$?"
+	mergefile PKGBUILD prefix build check package suffix || exit "$?"
 done
-

@@ -1,0 +1,122 @@
+#!/usr/bin/env perl
+
+use warnings 'FATAL' => 'all';
+use strict;
+
+my $PROG = 'perl-pkgbuild';
+
+sub putpkgbuild
+{
+	my($sect, $subsect, $text) = @_;
+	open my $pipe, '|-', 'putpkgtree' => 'PKGBUILD', $sect, $subsect
+		or die "open putpkgtree: $!";
+	print $pipe $text;
+	close $pipe or exit $? >> 8;
+}
+
+sub putfuncs
+{
+	my($funcs) = @_;
+	for my $f (keys %$funcs){
+		my $sects = $funcs->{$f};
+		while(my ($s, $txt) = each %$sects){
+			putpkgbuild($f, $s, $txt);
+		}
+	}
+}
+
+sub startfunc
+{
+	my($name) = @_;
+	return <<"ENDTXT";
+${name}()
+(
+  cd "\$_distdir"
+ENDTXT
+}
+
+sub functxt
+{
+	my $fmt = shift;
+	$fmt .= "\n" unless($fmt =~ /\n\z/);
+	my $txt = sprintf $fmt, @_;
+	$txt =~ s/^/  /gm;
+	return $txt;
+}
+
+sub main
+{
+	if(@_ == 0 || ($_[0] ne 'MM' && $_[0] ne 'MB')){
+		print STDERR qq{usage: $PROG ["MM" or "MB"]\n};
+		return 1;
+	}
+
+	my $type = shift;
+	my($script, $make, $iargs);
+	my @badenv = qw/PERL5LIB/;
+	my @exports = qw/PERL_MM_USE_DEFAULT=1/;
+	if($type eq 'MM'){
+		$script = 'Makefile.PL';
+		$make = 'make';
+		$iargs = q{INSTALLDIRS=vendor DESTDIR="$pkgdir"};
+		push @exports, 'PERL_AUTOINSTALL=--skipdeps';
+		push @badenv, 'PERL_MM_OPT';
+	}else{
+		$script = 'Build.PL';
+		$make = './Build';
+		$iargs = q{installdirs=vendor destdir="$pkgdir"};
+		push @badenv, 'PERL_MB_OPT', 'MODULEBUILDRC=/dev/null';
+	}
+
+	my %funcs;
+	my @fnames = qw/build check package/;
+	for my $f (@fnames){
+		$funcs{$f}{'beg'} = startfunc($f);
+		# Module::Build uses env vars for each stage of Build
+		if($type eq 'MB'){
+			$funcs{$f}{'beg'} = <<"ENDTXT";
+export @exports
+unset @badenv
+ENDTXT
+		}
+	}
+
+	# ExtUtils::MakeMaker only uses env vars for Makefile.PL
+	if($type eq 'MM'){
+		$funcs{'build'}{'beg'} .= functxt(<<'ENDTXT', "@exports", "@badenv");
+export %s
+unset %s
+ENDTXT
+	}
+
+	$funcs{'build'}{'body'} = functxt(<<'ENDTXT', $script, $make);
+ . functxt(<<'ENDTXT', );
+
+/usr/bin/perl %s
+%s
+ENDTXT
+
+	$funcs{'check'}{'body'} = functxt("%s test", $make);
+
+	$funcs{'package'}{'body'} = functxt(<<'ENDTXT', $make, $iargs);
+%s install %s
+find "$pkgdir" -name .packlist -o -name perllocal.pod -delete
+ENDTXT
+
+	for my $f (@fnames){
+		$funcs{$f}{'end'} = ")\n";
+	}
+	putfuncs(\%funcs);
+
+	putpkgbuild('suffix', 'body', <<'ENDTXT');
+# Local Variables:
+# mode: shell-script
+# sh-basic-offset: 2
+# End:
+# vim:set ts=2 sw=2 et:
+ENDTXT
+
+	return 0;
+}
+
+exit main(@ARGV);

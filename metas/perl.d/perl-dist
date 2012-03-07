@@ -4,7 +4,7 @@ use warnings 'FATAL' => 'all';
 use strict;
 
 my $PROG = 'metas/perl.d/perl-dist';
-my $FUNCPROG = 'perl-dist-funcs';
+my $PBPROG = 'perl-pkgbuild';
 
 sub DBG {}
 if(exists $ENV{'GENDBG'}){
@@ -381,12 +381,15 @@ sub printdata
 	return;
 }
 
-sub printfuncs
+sub writepb
 {
 	my($ddir) = @_;
 	my $dtype = (-f "$ddir/Build.PL" ? "MB" : "MM");
-	exec $FUNCPROG => $dtype
-	  or die "$PROG: $FUNCPROG failed to execute!\n";
+	if(system $PBPROG => $dtype){
+		return $? >> 8;
+	}else{
+		return 0;
+	}
 }
 
 sub main
@@ -419,16 +422,19 @@ sub main
 		 %$deps,
 		 );
 
-	print STDERR "DBG: \$dir = $dir\n";
 	chdir $dir or die "chdir: $!";
 
-	close STDOUT or die "close STDOUT: $!";
+	my $ret = writepb($dir);
+	if($ret){
+		print STDERR "$PROG: failed to write PKGBUILD: error $ret\n";
+		return 1;
+	}
+
+	close STDOUT;
 	open STDOUT, '>', 'PKGDATA' or die "open PKGDATA: $!";
 	printdata(\%pbvars);
-
-	close STDOUT or die "close STDOUT: $!";
-	open STDOUT, '>', 'PKGFUNC', or die "open PKGFUNC: $!";
-	exit printfuncs($dir);
+	close STDOUT or die "close PKGDATA: $!";
+	return 0;
 }
 
 # Create the src/ directory and tarball symlink. Then chdir into it.

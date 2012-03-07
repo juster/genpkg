@@ -3,10 +3,10 @@
 set -e
 umask 022
 prog=setup
-binfiles=(genpkg mkpkgmeta modpkgmeta pbfields mergepbfields emitpkgtree)
-metas=(perl perl.d/
-	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-dist-funcs
-	perl.d/scrapecore)
+binfiles='genpkg mkpkgmeta modpkgmeta pbfields mergepbfields putpkgtree getpkgtree'
+metas='perl perl.d/
+	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-pkgbuild
+	perl.d/scrapecore'
 
 md()
 {
@@ -36,14 +36,14 @@ Run "$prog tweaks" to install tweaks into ~/pkg/tweaks.
 EOF
 	;;
 genpkg)	md ~/bin
-	for pkg in ${binfiles[@]}
+	for pkg in $binfiles
 	do
 		ins "bin/$pkg" ~
 	done
 
 	md ~/.genpkg
 	md ~/.genpkg/metas
-	for m in ${metas[@]}
+	for m in $metas
 	do
 		ins "metas/$m" ~/.genpkg
 	done

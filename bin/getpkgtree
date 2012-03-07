@@ -14,5 +14,5 @@ then
 	exit 100
 fi
 [ -d "PKGTREE/$1" ] || exit 101
-[ -d "PKGTREE/$1/$2" ] || exit 101
+[ -d "PKGTREE/$1/$2" ] || exit 102
 find "PKGTREE/$1/$2" -maxdepth 1 -type f | sort | xargs cat

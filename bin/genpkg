@@ -76,17 +76,15 @@ do
 	[ -d "$pkgd/$pkg" ] || mkdir "$pkgd/$pkg"
 	cd "$pkgd/$pkg"
 
-	if [ -d PKGTREE ]
-	then
-		echo "$prog: warning: removing old PKGTREE" 1>&2
-		rm -rf PKGTREE
-	fi
+	[ -d PKGTREE ] && rm -rf PKGTREE
 	mkdir PKGTREE
 
-	if METABIN="$metad" PKGVAR="$vard" mkpkgmeta "$pkg"
+	trap 'rm -f PKGDATA' 1 2 15
+	if METABIN="$metad" PKGVAR="$vard" mkpkgmeta "$pkg" > PKGDATA
 	then
 		echo "$pkgd/$pkg"
 	else
+		rm PKGDATA
 		exit "$?"
 	fi
 

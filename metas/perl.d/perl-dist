@@ -430,10 +430,7 @@ sub main
 		return 1;
 	}
 
-	close STDOUT;
-	open STDOUT, '>', 'PKGDATA' or die "open PKGDATA: $!";
 	printdata(\%pbvars);
-	close STDOUT or die "close PKGDATA: $!";
 	return 0;
 }
 

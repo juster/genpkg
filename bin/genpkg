@@ -80,7 +80,7 @@ do
 	mkdir PKGTREE
 
 	trap 'rm -f PKGDATA' 1 2 15
-	if METABIN="$metad" PKGVAR="$vard" mkpkgmeta "$pkg" > PKGDATA
+	if METABIN="$metad" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
 	then
 		echo "$pkgd/$pkg"
 	else

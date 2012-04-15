@@ -27,10 +27,11 @@ mergefile()
 
 		case "$?" in
 		0)	;;
-		101)	echo "$prog: error: missing file in PKGTREE: $fname" 1>&2
+		101)	rm "$fname.$$"
 			return 101 ;;
 		102)	continue ;; # empty section so don't echo a newline below
 		*)	echo "$prog: unknown error from getpkgtree: $?" 1>&2
+			rm "$fname.$$"
 			return 1 ;;
 		esac
 
@@ -45,6 +46,16 @@ mergefile()
 		rm "$fname.$$"
 		return 1
 	fi
+}
+
+scanfield()
+{
+	awk -v fld="$1" '
+BEGIN { FS = "\n"; RS = "" }
+$1 = fld { print $2; found = 1; exit }
+END { exit !found }
+'
+	return $?
 }
 
 if [ $# -lt 1 ]
@@ -94,10 +105,29 @@ do
 	#	echo "Modified metapackage." 1>&2
 	#fi
 
+	# Insert PKGBUILD fields into prefix of PKGBUILD body.
 	cat PKGDATA | injectdigs | pbfields | putpkgtree PKGBUILD prefix body || exit "$?"
-	mergefile PKGBUILD prefix build check package suffix || exit "$?"
 
-	if ! [ "$GENPKGDBG" ] then
+	# Merge split PKGTREE files into their own separate text files.
+	mergefile PKGBUILD prefix build check package suffix
+	case $? in
+	0) ;;
+	101)	echo "$PROG: error: missing PKGBUILD file in PKGTREE" 1>&2
+		exit 101 ;;
+	*)	exit $?
+	esac
+
+	pkgname=`scanfield pkgname < PKGDATA`
+	if [ $? -ne 0 ]
+	then
+		echo "$PROG: pkgname missing from generated PKGDATA" 1>&2
+		exit 1
+	fi
+	# Ignore errors when merging .install file. We don't mind missing it.
+	mergefile "$pkgname.install" pre_install post_install pre_upgrade post_upgrade
+
+	if ! [ "$GENPKGDBG" ]
+	then
 		rm -rf PKGTREE
 		rm PKGDATA
 	fi

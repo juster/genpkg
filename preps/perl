@@ -7,7 +7,7 @@ use File::Fetch;
 use IO::Handle; # for autoflush
 use Cwd;
 
-my $PROG = 'metas/perl';
+my $PROG = 'preps/perl';
 my %BADNAMES = ('perl-libwww' => 'libwww-perl');
 
 sub err

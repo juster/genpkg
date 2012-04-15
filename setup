@@ -4,7 +4,7 @@ set -e
 umask 022
 prog=setup
 binfiles='genpkg prepkg modpkg pbfields putpkgtree getpkgtree injectdigs'
-metas='perl perl.d/
+preps='perl perl.d/
 	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-pkgbuild
 	perl.d/scrapecore'
 
@@ -42,10 +42,10 @@ genpkg)	md ~/bin
 	done
 
 	md ~/.genpkg
-	md ~/.genpkg/metas
-	for m in $metas
+	md ~/.genpkg/preps
+	for p in $preps
 	do
-		ins "metas/$m" ~/.genpkg
+		ins "preps/$p" ~/.genpkg
 	done
 	md ~/.genpkg/var
 	;;

@@ -3,7 +3,7 @@
 use warnings 'FATAL' => 'all';
 use strict;
 
-my $PROG = 'metas/perl.d/perl-dist';
+my $PROG = 'preps/perl.d/perl-dist';
 my $PBPROG = 'perl-pkgbuild';
 
 sub DBG {}

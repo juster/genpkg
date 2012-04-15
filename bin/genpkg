@@ -2,7 +2,7 @@
 
 prog=genpkg
 
-metad=~/.genpkg/metas
+prepd=~/.genpkg/preps
 templd=~/.genpkg/templ
 tweakd=~/pkg/tweaks
 pkgd=~/pkg/dest
@@ -80,7 +80,7 @@ do
 	mkdir PKGTREE
 
 	trap 'rm -f PKGDATA' 1 2 15
-	if METABIN="$metad" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
+	if METABIN="$prepd" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
 	then
 		echo "$pkgd/$pkg"
 	else
@@ -88,7 +88,7 @@ do
 		exit "$?"
 	fi
 
-	#twk="$tweakd/$pkg"
+	#mod="$tweakd/$pkg"
 	#if [ -f "$twk" -a -r "$twk" ] && modmetapkg
 	#then
 	#	echo "Modified metapackage." 1>&2

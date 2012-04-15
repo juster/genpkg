@@ -32,7 +32,7 @@ ins()
 case "$1" in
 '')	cat <<EOF 1>&2
 Run "$prog genpkg" to install genpkg & friends into ~/genpkg and ~/bin.
-Run "$prog tweaks" to install tweaks into ~/pkg/tweaks.
+Run "$prog mods" to install mods into ~/pkg/mods.
 EOF
 	;;
 genpkg)	md ~/bin
@@ -49,12 +49,12 @@ genpkg)	md ~/bin
 	done
 	md ~/.genpkg/var
 	;;
-tweaks)	md ~/pkg/tweaks/
-	for t in tweaks/*
+mods)	md ~/pkg/mods/
+	for m in mods/*
 	do
-		case $t in *~) continue ;; esac
-		echo ~/pkg/"$t"
-		cp "$t" ~/pkg/"$t"
+		case $m in *~) continue ;; esac
+		echo ~/pkg/"$m"
+		cp "$t" ~/pkg/"$m"
 	done
 	;;
 *)	echo "$prog: unrecognized argument: $1" 1>&2

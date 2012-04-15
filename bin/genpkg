@@ -94,6 +94,11 @@ do
 	#	echo "Modified metapackage." 1>&2
 	#fi
 
-	pbfields < PKGDATA | putpkgtree PKGBUILD prefix body || exit "$?"
+	cat PKGDATA | injectdigs | pbfields | putpkgtree PKGBUILD prefix body || exit "$?"
 	mergefile PKGBUILD prefix build check package suffix || exit "$?"
+
+	if ! [ "$GENPKGDBG" ] then
+		rm -rf PKGTREE
+		rm PKGDATA
+	fi
 done

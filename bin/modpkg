@@ -1,10 +1,14 @@
 #!/usr/bin/env io
 
-PFieldVal := Object clone
-PFieldVal do(
-	stringValue := nil
-	ownerField := nil
+PROG := "modpkg"
 
+# Classes for playing with PKGDATA files.
+
+PkgDataFieldVal := Object clone do(
+	init := method(
+		self stringValue := nil
+		self ownerField := nil
+	)
 	moveTo := method(newOwner,
 		ownerField removeValue(self)
 		ownerField = newOwner addValue(self)
@@ -16,8 +20,7 @@ PFieldVal do(
 	asString := method(stringValue)
 )
 
-PFieldValMux := Object clone
-PFieldValMux do(
+PkgDataFieldValMux := Object clone do(
 	init := method(
 		self fieldVals := List clone
 	)
@@ -36,13 +39,12 @@ PFieldValMux do(
 	)
 )
 
-PField := Object clone
-PField do(
+PkgDataField := Object clone do(
 	init := method(
 		self fieldVals := List clone
 	)
 	match := method(
-		mux := PFieldValMux clone
+		mux := PkgDataFieldValMux clone
 		call evalArgs foreach(arg,
 			fieldVals foreach(fv,
 				fv matches(arg) ifTrue(mux addValue(fv))
@@ -59,16 +61,269 @@ PField do(
 		fieldVals remove(fv)
 		self
 	)
+	getValues := method(fieldVals)
+	add := method(strVal,
+		fv := PkgDataFieldVal clone
+		fv stringValue = strVal
+		addValue(fv)
+	)
+	isEmpty := method((fieldVals size) == 0)
 )
 
-depends := PField clone
-list("foo", "bar") foreach(str,
-	val := PFieldVal clone
-	val stringValue = str
-	depends addValue(val)
+PkgDataFile := File clone do(
+	readField := method(
+		f := PkgDataField clone
+		(name := readLine) ifNil(return nil)
+		while(strVal := readLine,
+			(strVal == "") ifTrue(break)
+			fv := PkgDataFieldVal clone
+			fv stringValue = strVal
+			f addValue(fv)
+		)
+		return list(name, f)
+	)
+	readFields := method(
+		fields := Map clone
+		while(f := readField; f isNil not, fields atPut(f at(0), f at(1)))
+		fields
+	)
+	writeFields := method(fields,
+		fields foreach(name, f,
+			self write(name, "\n",
+				f fieldVals map(fv, (fv asString) .. "\n") join(""),
+				"\n")
+		)
+		truncateToSize(position)
+	)
 )
 
-checkdepends := PField clone
-depends match("foo", "bar") moveTo(checkdepends)
-checkdepends fieldVals foreach(fv, fv asString println)
-checkdepends println
+# Classes for text files bundled into the source package. These use the PKGTREE
+# directory structure for splitting sections apart and modifying them separately.
+
+SrcPkgFileSect := Object clone do(
+	init := method(
+		self file := nil
+		self name := nil
+	)
+	put := method(subSect, text,
+		self file put(self name, subSect, text)
+	)
+)
+
+SrcPkgFile := Object clone do(
+	init := method(
+		self fileName := nil
+	)
+	put := method(section, subSection, text,
+		tree := treeDir
+		sectDir := fileDir createIfAbsent directoryNamed(section) createIfAbsent
+		subSectFile := sectDir fileNamed(subSection) openForAppending
+		subSectFile write(text) close
+	)
+	treeDir := method(
+		tree := Directory with("PKGTREE")
+		tree exists ifFalse(
+			writeln(PROG .. ": PKGTREE directory is missing.")
+			System exit(1)
+		)
+		tree
+	)
+	fileDir := method(
+		treeDir directoryNamed(self fileName)
+	)
+	exists := method(
+		fileDir exists
+	)
+	hasSection := method(sectionName,
+		fileDir directoryNamed(sectionName) exists
+	)
+	section := method(sectionName,
+		s := SrcPkgFileSect clone
+		s name = sectionName
+		s file = self
+		s
+	)
+)
+
+# PKGBUILDs and .install files are BashFiles. We indent them and add logic for starting funcs.
+
+BashFunc := SrcPkgFileSect clone do(
+	init := method(
+		self name := nil
+	)
+	indentFunc := method(text, spaceCount,
+		spaces := " " repeated(spaceCount)
+		spaces .. (
+			text splitNoEmpties("\n") join("\n" .. spaces)
+		) .. "\n"
+	)
+	initIfAbsent := method(
+		(file hasSection(name)) ifFalse(
+			put("beg", name .. "()\n{\n")
+			put("end", "}\n")
+		)
+	)
+	append := method(text,
+		initIfAbsent
+		put("body", indentFunc(text, 4))
+	)
+	prepend := method(text,
+		initIfAbsent
+		put("beg", indentFunc(text, 4))
+	)
+)
+
+BashFile := SrcPkgFile clone do(
+	init := method(
+		self functions := List clone
+	)
+	func := method(name,
+		f := functions detect(f, f name == name)
+		f ifNil( 
+			f = BashFunc clone
+			functions append(f)
+			f name = name
+			f file = self
+		)
+		f
+	)
+)
+
+# SourceFiles are files in the sources array that are bundled with source package.
+
+SourceFile := Object clone do(
+	init := method(
+		self fileName := nil
+		self fileContents := ""
+	)
+	append := method(seq,
+		fileContents appendSeq(seq)
+	)
+	writeFile := method(File with(fileName) open write(fileContents) close)		
+)
+
+ModifierContext := Object clone do(
+	dotInstallFuncs := list("pre_install", "post_install", "pre_upgrade", "post_upgrade")
+	pbFields := list("pkgname", "pkgver", "pkgrel", "pkgdesc", "epoch",
+		"url", "license", "install", "changelog", "source", "noextract",
+		"md5sums", "sha512sums", "groups", "arch", "backup",
+		"depends", "makedepends", "checkdepends", "optdepends",
+		"conflicts", "provides", "replaces", "options")
+	pbFuncs := list("build", "package", "check")
+
+	init := method(
+		self PKGBUILD := BashFile clone
+		PKGBUILD fileName = "PKGBUILD"
+		PKGBUILD sourceFiles := Map clone
+
+		# Create shortcuts in our context for the common PKGBUILD funcs.
+
+		pbFuncs foreach(n, self setSlot(n, PKGBUILD func(n)))
+
+		PKGBUILD hasSourceFile := method(fileName,
+			sourceFiles hasKey(fileName)
+		)
+		PKGBUILD sourceFile := method(fileName,
+			sourceFiles hasKey(fileName) ifTrue(return sourceFiles at(fileName))
+			sf := SourceFile clone
+			sf fileName = fileName
+			sf
+		)
+		PKGBUILD addPatch := method(fileName, level, text,
+			hasSourceFile(fileName) ifTrue(
+				writeln(PROG .. ": patch file named " .. fileName .. " already exists")
+				System exit(1)
+			)
+			build prepend("patch -p" .. level .. " < \"$srcdir\"/" .. fileName .. "\n")
+			sf := sourceFile(fileName)
+			sf appendSeq(text)
+			sf
+		)
+		PKGBUILD writeSourceFiles := method(
+			sourceFiles foreach(sf, sf writeFile)
+			self
+		)
+	)
+
+	# Make the dotInstall slot a lazy loader for the BashFile object. Sets the .install filename
+	# to match the pkgname when it is first used.
+	dotInstall := lazySlot(
+		name := pkgname getValues at(0)
+		name ifNil(
+			writeln(PROG .. ": pkgname is missing from PKGDATA!")
+			System exit(1)
+		)
+		newDot := BashFile clone
+		newDot fileName := (name asString) .. ".install"
+		newDot
+	)
+
+	# The .install function names are shortcuts into the dotInstall BashFile object.
+	forward := method(
+		messageName := call message name
+		dotInstallFuncs contains(messageName) ifTrue(
+			return dotInstall func(messageName)
+		)
+		resend
+	)
+
+	initFields := method(fields,
+		pbFields foreach(fieldName,
+			f := fields at(fieldName)
+			f ifNil(f = PkgDataField clone)
+			self setSlot(fieldName, f)
+		)
+	)
+
+	getFields := method(
+		tmp := pbFields map(fieldName,
+			kv := nil
+			fv := self getSlot(fieldName)
+			fv isEmpty ifFalse(kv = list(fieldName, fv))
+			kv
+		) select(v, v) asMap
+	)
+
+	finish := method(
+		PKGBUILD writeSourceFiles
+		PKGBUILD sourceFiles foreach(fileName, sourceFile,
+			source add(fileName)
+		)
+	)
+)
+
+# Startup sanity checks.
+
+((System args size) == 2) ifFalse(
+	writeln("usage: " .. PROG .. " [modifier script filename]")
+	System exit(2)
+)
+
+scriptName := System args at(1)
+(File exists(scriptName)) ifFalse(
+	writeln(PROG .. ": script file does not exist: " .. scriptName)
+	System exit(2)
+)
+
+(File exists("PKGDATA")) ifFalse(
+	writeln(PROG .. ": PKGDATA file does not exist")
+	System exit(2)
+)
+
+(Directory exists("PKGTREE")) ifFalse(
+	writeln(PROG .. ": PKGTREE directory does not exist")
+	System exit(2)
+)
+
+# Get down ta biness.
+
+dataFile := PkgDataFile with("PKGDATA") openForUpdating
+
+ctx := ModifierContext clone
+ctx initFields(dataFile readFields)
+ctx doFile(scriptName)
+ctx finish
+
+dataFile rewind
+dataFile writeFields(ctx getFields)
+dataFile close

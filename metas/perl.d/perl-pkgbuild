@@ -90,8 +90,6 @@ ENDTXT
 	}
 
 	$funcs{'build'}{'body'} = functxt(<<'ENDTXT', $script, $make);
- . functxt(<<'ENDTXT', );
-
 /usr/bin/perl %s
 %s
 ENDTXT

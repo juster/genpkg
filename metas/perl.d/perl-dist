@@ -370,9 +370,6 @@ use JSON::XS qw(decode_json); # for META.json
 use YAML::XS (); # for META.yml
 use Pod::Select (); # search POD for description
 
-use Digest::MD5 (); # for md5sums & sha512sums
-use Digest::SHA ();
-
 sub printdata
 {
 	my($pbvars) = @_;
@@ -416,8 +413,6 @@ sub main
 		('pkgver'  => $ver,
 		 'pkgdesc' => $meta->{'abstract'},
 		 'arch' => (xsdist($distdir) ? ['i686', 'x86_64'] : 'any'),
-		 'md5sums' => md5sums($file),
-		 'sha512sums' => sha512sums($file),
 		 'distdir' => $distdir,
 		 %$deps,
 		 );
@@ -617,25 +612,6 @@ sub _readmedesc
 
 	close $fh;
 	return undef;
-}
-
-#-----------------------------------------------------------------------------
-
-sub md5sums
-{
-	return [ map {
-		open my $fh, '<', $_ or die "open: $!";
-		my $md5 = Digest::MD5->new()->addfile($fh)->hexdigest;
-		close $fh;
-		$md5;
-	} @_ ]
-}
-
-sub sha512sums
-{
-	return [ map {
-		my $sha = Digest::SHA->new(512)->addfile($_)->hexdigest;
-	} @_ ]
 }
 
 exit main(@ARGV);

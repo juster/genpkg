@@ -1,0 +1,59 @@
+#!/bin/sh
+
+PROG=injectdigs
+
+if [ $# -eq 0 ]
+then
+	digstr="md5 sha512"
+else
+	digstr=$*
+fi
+
+if ! which openssl > /dev/null
+then
+	echo "$PROG: openssl needs to be installed to calculate digests"
+	exit 2
+fi
+
+awk -v digstr="$digstr" -v prog="$PROG" '
+BEGIN {
+	diglen = split(digstr, digalgs)
+	FS = "\n"; RS = ""; ORS = "\n\n"
+}
+
+function calcdigs(alg, files)
+{
+	cmd = "openssl " alg " " files
+	digests = ""
+	while(cmd | getline > 0){
+		digests = digests $2 "\n"
+	}
+	close(cmd)
+	return digests
+}
+
+1
+
+$1 == "source" {
+	for(i = 2; i <= NF; i++){
+		file = $i
+		sub(/.*\//, "", file)
+		if(system("test -f " file) != 0){
+			print prog ": source file " file " is missing!" | "cat 1>&2"
+			exit 1
+		}
+		files = files file " "
+		filelen++
+	}
+}
+
+END {
+	FS = " "; RS = "\n"
+	OFS = ORS = "\n"
+	if(!filelen) exit 0
+	for(i = 1; i <= diglen; i++){
+		alg = digalgs[i]
+		print alg "sums", calcdigs(alg, files)
+	}
+}
+'

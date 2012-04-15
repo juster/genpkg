@@ -3,7 +3,7 @@
 set -e
 umask 022
 prog=setup
-binfiles='genpkg mkpkgmeta modpkg pbfields putpkgtree getpkgtree'
+binfiles='genpkg mkpkgmeta modpkg pbfields putpkgtree getpkgtree injectdigs'
 metas='perl perl.d/
 	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-pkgbuild
 	perl.d/scrapecore'

@@ -4,7 +4,7 @@ prog=genpkg
 
 prepd=~/.genpkg/preps
 templd=~/.genpkg/templ
-tweakd=~/pkg/tweaks
+modsd=~/pkg/mods
 pkgd=~/pkg/dest
 vard=~/.genpkg/var
 
@@ -64,9 +64,9 @@ then
 	exit 2
 fi
 
-if ! [ -d "$tweakd" ]
+if ! [ -d "$modsd" ]
 then
-	echo "$prog: bad package tweaks dir: $tweakd" 1>&2
+	echo "$prog: bad package mods dir: $modsd" 1>&2
 	exit 1
 fi
 
@@ -99,11 +99,16 @@ do
 		exit "$?"
 	fi
 
-	#mod="$tweakd/$pkg"
-	#if [ -f "$twk" -a -r "$twk" ] && modmetapkg
-	#then
-	#	echo "Modified metapackage." 1>&2
-	#fi
+	mod="$modsd/$pkg"
+	if [ -f "$mod" -a -r "$mod" ]
+	then
+		if modpkg "$mod"
+		then
+			echo "Modified with $mod." 1>&2
+		else
+			echo "$prog: modpkg failed." 1>&2
+		fi
+	fi
 
 	# Insert PKGBUILD fields into prefix of PKGBUILD body.
 	cat PKGDATA | injectdigs | pbfields | putpkgtree PKGBUILD prefix body || exit "$?"

@@ -1,7 +1,4 @@
-+ optdepends perl-net-ssleay: TLS/SSL connections with AnyEvent::Handle
-+ optdepends perl-json-xs: send or receive JSON with AnyEvent::Handle
-+ depends perl-ev>=4.00
-+ depends perl-guard>=1.02
-+ depends perl-async-interrupt>=1.0
-= pkgverfmt %.02f
-= epoch 2
+optdepends add("perl-net-ssleay: TLS/SSL connections with AnyEvent::Handle")
+optdepends add("perl-json-xs: send or receive JSON with AnyEvent::Handle")
+depends add("perl-ev>=4.00") add("depends perl-guard>=1.02") add("perl-async-interrupt>=1.0")
+epoch add("2")

@@ -1,8 +1,6 @@
-+ provides perl-app-perlbrew=${pkgver}
-< makedepends perl-io-all
-> checkdepends
-< makedepends perl-path-class
-> checkdepends
-= license custom:MIT
-+ package() mkdir -p "$pkgdir/usr/share/licenses/perlbrew"
-+ package() cp LICENSE "$pkgdir/usr/share/licenses/perlbrew/LICENSE"
+provides add("perl-app-perlbrew=${pkgver}")
+makedepends match("perl-io-all") moveTo(checkdepends)
+makedepends match("perl-path-class") moveTo(checkdepends)
+license add("custom:MIT")
+package append("mkdir -p \"$pkgdir\"/usr/share/licenses/perlbrew")
+package append("cp LICENSE \"$pkgdir\"/usr/share/licenses/perlbrew/LICENSE")

@@ -1,1 +1,1 @@
-= license custom:unknown
+license add("custom:unknown")

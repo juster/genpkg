@@ -1,1 +1,1 @@
-+ conflicts perl-libwww<6
+conflicts add("perl-libwww<6")

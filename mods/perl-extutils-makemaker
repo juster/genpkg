@@ -1,6 +1,4 @@
-+ depends perl-cpan-meta>=2.112150
-+ depends perl-extutils-install>=1.52
-+ depends perl-extutils-command>=1.16
-+ depends perl-extutils-manifest>=1.58
-+ >build() sed -e '/my::bundles/d' Makefile.PL >Makefile.PL.new
-+ >build() mv Makefile.PL.new Makefile.PL
+depends add("perl-cpan-meta>=2.112150") add("perl-extutils-install>=1.52") \
+	add("perl-extutils-command>=1.16") add("depends perl-extutils-manifest>=1.58") \
+build append("sed -e '/my::bundles/d' Makefile.PL >Makefile.PL.new")
+build append("mv Makefile.PL.new Makefile.PL")

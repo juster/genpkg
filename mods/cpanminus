@@ -1,1 +1,1 @@
-+ provides perl-app-cpanminus=${pkgver}
+provides add("perl-app-cpanminus=${pkgver}")

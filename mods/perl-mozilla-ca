@@ -1,1 +1,1 @@
-= license GPL2 LGPL2.1
+license = list("GPL2", "LGPL2.1")

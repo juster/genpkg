@@ -51,9 +51,7 @@ List do(
 	match := method(
 		mux := PkgDataFieldValMux clone
 		call evalArgs foreach(arg,
-			fieldVals foreach(fv,
-				fv matches(arg) ifTrue(mux addValue(fv))
-			)
+			foreach(fv, fv matches(arg) ifTrue(mux addValue(fv)))
 		)
 		mux
 	)
@@ -144,6 +142,7 @@ SrcPkgFile := Object clone do(
 # PKGBUILDs and .install files are BashFiles. We indent them and add logic for starting funcs.
 
 BashFunc := SrcPkgFileSect clone do(
+	indentLevel := 2
 	init := method(
 		self name := nil
 	)
@@ -161,11 +160,11 @@ BashFunc := SrcPkgFileSect clone do(
 	)
 	append := method(text,
 		initIfAbsent
-		put("body", indentFunc(text, 4))
+		put("body", indentFunc(text, indentLevel))
 	)
 	prepend := method(text,
 		initIfAbsent
-		put("beg", indentFunc(text, 4))
+		put("beg", indentFunc(text, indentLevel))
 	)
 )
 

@@ -203,10 +203,13 @@ ModifierContext := Object clone do(
 		"url", "license", "install", "changelog", "source", "noextract",
 		"md5sums", "sha512sums", "groups", "arch", "backup",
 		"depends", "makedepends", "checkdepends", "optdepends",
-		"conflicts", "provides", "replaces", "options")
+		"conflicts", "provides", "replaces", "options",
+		"packager", "maintainer")
 	pbFuncs := list("build", "package", "check")
 
 	init := method(
+		self extraFields := nil
+
 		self PKGBUILD := BashFile clone
 		PKGBUILD fileName = "PKGBUILD"
 		PKGBUILD sourceFiles := Map clone
@@ -268,6 +271,11 @@ ModifierContext := Object clone do(
 			f ifNil(f = List clone)
 			self setSlot(fieldName, f)
 		)
+
+		extraFields = Map clone
+		fields keys difference(pbFields) foreach(fieldName,
+			extraFields atPut(fieldName, fields at(fieldName))
+		)
 	)
 
 	getFields := method(
@@ -276,7 +284,7 @@ ModifierContext := Object clone do(
 			fv := self getSlot(fieldName)
 			fv isEmpty ifFalse(kv = list(fieldName, fv))
 			kv
-		) select(v, v) asMap
+		) select(v, v) asMap merge(extraFields)
 	)
 
 	finish := method(

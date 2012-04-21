@@ -35,7 +35,8 @@ Run "$prog genpkg" to install genpkg & friends into ~/genpkg and ~/bin.
 Run "$prog mods" to install mods into ~/pkg/mods.
 EOF
 	;;
-genpkg)	md ~/bin
+genpkg)
+	md ~/bin
 	for pkg in $binfiles
 	do
 		ins "bin/$pkg" ~
@@ -49,12 +50,12 @@ genpkg)	md ~/bin
 	done
 	md ~/.genpkg/var
 	;;
-mods)	md ~/pkg/mods/
+mods)
+	md ~/pkg/mods/
 	for m in mods/*
 	do
-		case $m in *~) continue ;; esac
+		cp "$m" ~/pkg/"$m"
 		echo ~/pkg/"$m"
-		cp "$t" ~/pkg/"$m"
 	done
 	;;
 *)	echo "$prog: unrecognized argument: $1" 1>&2

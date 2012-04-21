@@ -330,17 +330,21 @@ sub _nocore
 {
 	my(@mods) = @_;
 
-	my $path = _vardir() . '/coremods';
-	unless(-f $path){
-		print STDERR "$PROG: error: $path is missing.
+	my $cmpath = _vardir() . '/coremods';
+	unless(-f $cmpath){
+		my $scpath = ($ENV{'PREPSPATH'}
+			? "$ENV{'PREPSPATH'}/perl.d/scrapecore"
+			: q{genpkg's preps/perl.d/scrapecore});
+		print STDERR <<"END_ERR";
+$PROG: error: $cmpath is missing.
 ******************************************************************************
-  You must generate it with genpkg's metas/perl.d/scrapecore script. Run it
-  against the source distribution of perl that is currently being packaged.
+  You must generate it with $scpath.
+  Run it against the version of perl that is the official package.
 ******************************************************************************
-";
+END_ERR
 		exit 1;
 	}
-	open my $if, '<', $path or die "$PROG: open $path: $!";
+	open my $if, '<', $cmpath or die "$PROG: open $cmpath: $!";
 
 	my %mods = map { ($_ => 1) } @mods;
 	while(<$if>){

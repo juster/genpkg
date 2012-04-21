@@ -10,8 +10,9 @@ PkgDataFieldVal := Object clone do(
 		self ownerField := nil
 	)
 	moveTo := method(newOwner,
-		ownerField removeValue(self)
-		ownerField = newOwner addValue(self)
+		ownerField remove(self)
+		ownerField = newOwner
+		newOwner append(self)
 		self
 	)
 	matches := method(start,
@@ -37,12 +38,16 @@ PkgDataFieldValMux := Object clone do(
 	asList := method(
 		fieldVals
 	)
+	forward := method(
+		fieldVals foreach(fv, call message doInContext(fv))
+	)
 )
 
-PkgDataField := Object clone do(
-	init := method(
-		self fieldVals := List clone
-	)
+# We modify List itself so we can use the simple list() method
+# to assign lists to field names in package mod scripts.
+# Too magick?
+
+List do(
 	match := method(
 		mux := PkgDataFieldValMux clone
 		call evalArgs foreach(arg,
@@ -52,33 +57,24 @@ PkgDataField := Object clone do(
 		)
 		mux
 	)
-	addValue := method(newFV,
-		fieldVals append(newFV)
-		newFV ownerField = self
-		self
+	add := method(
+		call evalArgs foreach(strVal,
+			fv := PkgDataFieldVal clone
+			fv stringValue = strVal asString
+			fv ownerField = self
+			append(fv)
+		)
 	)
-	removeValue := method(fv,
-		fieldVals remove(fv)
-		self
-	)
-	getValues := method(fieldVals)
-	add := method(strVal,
-		fv := PkgDataFieldVal clone
-		fv stringValue = strVal
-		addValue(fv)
-	)
-	isEmpty := method((fieldVals size) == 0)
+	isEmpty := method(size == 0)
 )
 
 PkgDataFile := File clone do(
 	readField := method(
-		f := PkgDataField clone
+		f := List clone
 		(name := readLine) ifNil(return nil)
 		while(strVal := readLine,
 			(strVal == "") ifTrue(break)
-			fv := PkgDataFieldVal clone
-			fv stringValue = strVal
-			f addValue(fv)
+			f add(strVal)
 		)
 		return list(name, f)
 	)
@@ -90,7 +86,7 @@ PkgDataFile := File clone do(
 	writeFields := method(fields,
 		fields foreach(name, f,
 			self write(name, "\n",
-				f fieldVals map(fv, (fv asString) .. "\n") join(""),
+				f map(fv, (fv asString) .. "\n") join(""),
 				"\n")
 		)
 		truncateToSize(position)
@@ -248,7 +244,7 @@ ModifierContext := Object clone do(
 	# Make the dotInstall slot a lazy loader for the BashFile object. Sets the .install filename
 	# to match the pkgname when it is first used.
 	dotInstall := lazySlot(
-		name := pkgname getValues at(0)
+		name := pkgname at(0)
 		name ifNil(
 			writeln(PROG .. ": pkgname is missing from PKGDATA!")
 			System exit(1)
@@ -270,7 +266,7 @@ ModifierContext := Object clone do(
 	initFields := method(fields,
 		pbFields foreach(fieldName,
 			f := fields at(fieldName)
-			f ifNil(f = PkgDataField clone)
+			f ifNil(f = List clone)
 			self setSlot(fieldName, f)
 		)
 	)

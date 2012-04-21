@@ -1,4 +1,4 @@
-provides add("perl-app-perlbrew=${pkgver}")
+provides add("perl-app-perlbrew=$pkgver")
 makedepends match("perl-io-all") moveTo(checkdepends)
 makedepends match("perl-path-class") moveTo(checkdepends)
 license = list("custom:MIT")

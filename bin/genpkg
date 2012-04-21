@@ -131,7 +131,7 @@ do
 	# Ignore errors when merging .install file. We don't mind missing it.
 	mergefile "$pkgname.install" pre_install post_install pre_upgrade post_upgrade
 
-	if ! [ "$GENPKGDBG" ]
+	if [ -z "$GENPKGDBG" ]
 	then
 		rm -rf PKGTREE
 		rm PKGDATA

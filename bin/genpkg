@@ -91,7 +91,7 @@ do
 	mkdir PKGTREE
 
 	trap 'rm -f PKGDATA' 1 2 15
-	if METABIN="$prepd" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
+	if PREPSPATH="$prepd" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
 	then
 		echo "$pkgd/$pkg"
 	else

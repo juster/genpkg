@@ -1,6 +1,6 @@
 #!/bin/sh
 
-prog=mkpkgmeta
+prog=prepkg
 
 err()
 {
@@ -39,19 +39,19 @@ case $# in
 	exit 1
 esac
 
-case "$METABIN" in
-'')	err "set METABIN before calling $prog"
+case "$PREPSPATH" in
+'')	err "set PREPSPATH before calling $prog"
 esac
 
 tmp="/tmp/$prog.$$"
-for flav in "$METABIN"/*
+for flav in "$PREPSPATH"/*
 do
 	pkgname="$1"
 	[ -f "$flav" -a -x "$flav" ] || continue
 	PATH="$PATH:$flav.d" "$flav" "$pkgname"
-	metaret=$?
+	prepret=$?
 	
-	case "$metaret" in
+	case "$prepret" in
 	0)	if prependmeta PKGDATA
 		then
 			exit 0

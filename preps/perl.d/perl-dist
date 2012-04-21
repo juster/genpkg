@@ -7,7 +7,7 @@ my $PROG = 'preps/perl.d/perl-dist';
 my $PBPROG = 'perl-pkgbuild';
 
 sub DBG {}
-if(exists $ENV{'GENDBG'}){
+if(exists $ENV{'GENPKGDBG'}){
 	no warnings 'redefine';
 	*DBG = sub { print STDERR "$PROG: DBG: ", @_ };
 }

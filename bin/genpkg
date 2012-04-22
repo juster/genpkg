@@ -134,6 +134,6 @@ do
 	if [ -z "$GENPKGDBG" ]
 	then
 		rm -rf PKGTREE
-		rm PKGDATA
+		#rm PKGDATA
 	fi
 done

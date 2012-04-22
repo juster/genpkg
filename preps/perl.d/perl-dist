@@ -377,8 +377,21 @@ use Pod::Select (); # search POD for description
 sub printdata
 {
 	my($pbvars) = @_;
+
+	while(my($name, $val) = each %$pbvars) {
+		if(!defined $val || $val eq q{}) {
+			warn "$PROG: warning: $name is undefined\n";
+			$val = q{};
+		}
+		print $name, "\n";
+		print "$_\n" for (ref $val ? @$val : $val);
+		print "\n";
+	}
+
+	# TODO: autodetect license type
+	printf("license\n%s\n\n", join "\n", qw/PerlArtistic GPL/);
 	print "options\n!emptydirs\n\n";
-	printmeta($pbvars);
+
 	return;
 }
 
@@ -413,13 +426,14 @@ sub main
 	my($name, $ver) = Convert::dist2pkg(@{$info}{'name', 'ver'});
 	my $deps = Convert::prereqs($name, $meta->{'prereqs'});
 
-	my %pbvars =
-		('pkgver'  => $ver,
-		 'pkgdesc' => $meta->{'abstract'},
-		 'arch' => (xsdist($distdir) ? ['i686', 'x86_64'] : 'any'),
-		 'distdir' => $distdir,
-		 %$deps,
-		 );
+	my %pbvars = (
+		'pkgver'  => $ver,
+		'pkgdesc' => $meta->{'abstract'},
+		'arch' => (xsdist($distdir) ? ['i686', 'x86_64'] : 'any'),
+		'distdir' => qq{"\$srcdir/$distdir"},
+		'customvars' => 'distdir',
+		%$deps,
+	);
 
 	chdir $dir or die "chdir: $!";
 
@@ -479,23 +493,6 @@ sub extractdist
 	die "$PROG: many dirs (@dirs) inside the tarball $file\n" if(@dirs > 1);
 	die "$PROG: no dirs found in tarball $file\n" if(@dirs == 0);
 	return $dirs[0];
-}
-
-sub printmeta
-{
-	my($pbvars) = @_;
-	while(my($name, $val) = each %$pbvars) {
-		if(!defined $val || $val eq q{}) {
-			warn "$PROG: warning: $name is undefined\n";
-			$val = q{};
-		}
-		print $name, "\n";
-		print "$_\n" for (ref $val ? @$val : $val);
-		print "\n";
-	}
-
-	# TODO: autodetect license type
-	printf("license\n%s\n\n", join "\n", qw/PerlArtistic GPL/);
 }
 
 sub loadmeta

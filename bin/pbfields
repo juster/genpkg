@@ -31,16 +31,30 @@ $1 == "pkgdesc" {
 
 $1 == "pkgverfmt" { pkgverfmt = $2 }
 
-strfield[$1] { output[$1] = $2 }
+$1 == "customvars" {
+	for(i = 2; i <= NF; i++){
+		customvars[i - 1] = $i
+	}
+	customlen = NF - 1
+}
 
-arrfield[$1] {
-	output[$1] = wraparray(length($1) + 2)
+{
+	if(strfield[$1]){
+		output[$1] = $2
+	}else {
+		arrtxt = wraparray(length($1) + 2)
+		if(arrfield[$1]){
+			output[$1] = arrtxt
+		}else{
+			unk[$1] = arrtxt
+		}
+	}
 }
 
 END {
-    if(pkgverfmt){
-        output["pkgver"] = sprintf(pkgverfmt, output["pkgver"])
-    }
+	if(pkgverfmt){
+		output["pkgver"] = sprintf(pkgverfmt, output["pkgver"])
+	}
 
 	if(!maintainer && !packager) { packager = "Anonymous" }
 	if(maintainer) print "# Maintainer: " maintainer
@@ -53,6 +67,10 @@ END {
 		if(name in output){
 			print name, output[name]
 		}
+	}
+	for(i = 1; i <= customlen; i++){
+		v = customvars[i]
+		print "_" v, unk[v]
 	}
 }
 

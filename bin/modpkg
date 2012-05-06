@@ -20,11 +20,13 @@ proc scanfields {inchan} {
 	set fld {}
 	while {[gets $inchan line] >= 0} {
 		if {$fld eq {}} {
-			set fld $line
+			# Skip extra (>1) empty lines.
+			if {$line ne {}} {
+				lassign [list $line] fld vals
+			}
 		} elseif {$line eq {}} {
 			set pkgdata($fld) $vals
-			set fld {}
-			set vals {}
+			lassign {} fld vals
 		} else {
 			lappend vals $line
 		}
@@ -55,39 +57,75 @@ set modch [open $mod]
 
 scanfields stdin
 
-set modi [interp create -safe $mod]
+set modi [interp create]
+
 foreach {name vals} [array get pkgdata] {
-	if {$name in $pbfuncs} {
-		$modi eval set $name $val
+	if {$name in $pbfields} {
+		$modi eval [list set $name $vals]
 	}
 }
-
+$modi eval [list set pbfuncs $pbfuncs]
+$modi eval [list set dotfuncs $dotfuncs]
 $modi eval {
 	proc trimbash {code} {
 		set code [string trim $code]
 		set lines [split $code "\n"]
-		for {set i 0} {$i < [llength $lines]} {incr $i} {
-			set ln [string trim [lindex $lines $i]]
-			set ln [concat [string repeat " " 2] $ln "\n"]
-			linsert $lines $i $ln
+		set code {}
+		for {set i 0} {$i < [llength $lines]} {incr i} {
+			set ln "  [string trim [lindex $lines $i]]"
+			set code "$code$ln\n"
 		}
-		return [join $lines ""]
+		return $code
+	}
+
+	proc initfunc {file func} {
+		if {! [file exists PKGTREE/$file/$func]} {
+			exec putpkgtree $file $func beg << "${func}()\n(\n"
+			exec putpkgtree $file $func end << ")\n"
+		}
+	}
+
+	proc initdotfunc {func} {
+		if {! [file exists PKGTREE/$pkgname.install]} {
+			lappend source "$pkgname.install"
+		}
+		initfunc $pkgname.install $func
+	}
+
+	proc fput {name code section} {
+		global dotfuncs pbfuncs
+
+		if {$name in $dotfuncs} {
+			initdotfunc $name
+			set file $pkgname.install
+		} elseif {$name in $pbfuncs} {
+			initfunc PKGBUILD $name
+			set file PKGBUILD
+		} else {
+			puts stderr "$prog: error: $name is not a known func"
+			exit 2
+		}
+
+		set code [trimbash $code]
+		exec putpkgtree $file $name $section << $code
 	}
 
 	proc fappend {name code} {
-		if {! $name in $pbfuncs} {
-			puts stderr "$prog: error: $name is not a permitted PKGBUILD func"
-			exit 2
-		}
-		exec "putpkgtree PKGBUILD $name body" << [trimbash $code]
+		fput $name $code body
 	}
 
 	proc fprepend {name code} {
-		if {! $name in $pbfuncs} {
-			puts stderr "$prog: error: $name is not a permitted PKGBUILD func"
-			exit 2
+		fput $name $code beg
+	}
+
+	proc move {srcname destname args} {
+		upvar #0 $srcname src $destname dest
+		foreach pat $args {
+			set idx [lsearch -glob $src "$pat*"]
+			if {$idx == -1} { error "$pat was not found in $srcname" }
+			lappend $dest [lindex $src $idx]
+			set src [lreplace $src $idx $idx]
 		}
-		exec "putpkgtree PKGBUILD $name beg" << [trimbash $code]
 	}
 }
 

@@ -1,0 +1,2 @@
+# Explicit version dep is discarded by genpkg
+setdep depends perl-libwww>=6.04

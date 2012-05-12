@@ -1,1 +1,1 @@
-depends add("perl-package-stash-xs>=0.24")
+lappend depends perl-package-stash-xs>=0.24

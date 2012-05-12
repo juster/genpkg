@@ -1,4 +1,4 @@
-optdepends add("perl-net-ssleay: TLS/SSL connections with AnyEvent::Handle")
-optdepends add("perl-json-xs: send or receive JSON with AnyEvent::Handle")
-depends add("perl-ev>=4.00") add("perl-guard>=1.02") add("perl-async-interrupt>=1.0")
-epoch add(Date now asNumber floor)
+set optdepends {"perl-net-ssleay: TLS/SSL connections with AnyEvent::Handle"
+	"perl-json-xs: send or receive JSON with AnyEvent::Handle"}
+lappend depends perl-ev>=4.00 perl-guard>=1.02 perl-async-interrupt>=1.0
+set epoch 3

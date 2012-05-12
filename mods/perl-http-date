@@ -1,1 +1,1 @@
-conflicts add("perl-libwww<6")
+lappend conflicts perl-libwww<6

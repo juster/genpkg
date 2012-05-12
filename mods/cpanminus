@@ -1,1 +1,1 @@
-provides add("perl-app-cpanminus=${pkgver}")
+set provides {perl-app-cpanminus=$pkgver}

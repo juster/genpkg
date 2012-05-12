@@ -1,2 +1,2 @@
-optdepends add("perl-lwp-protocol-https: for https:// url schemes")
-depends add("perl-http-message") add("depends perl-http-message>=6")
+lappend optdepends "perl-lwp-protocol-https: for https:// url schemes"
+lappend depends perl-http-message perl-http-message>=6

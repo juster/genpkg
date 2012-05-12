@@ -86,6 +86,7 @@ $modi eval {
 	}
 
 	proc initdotfunc {func} {
+		global pkgname source
 		if {! [file exists PKGTREE/$pkgname.install]} {
 			lappend source "$pkgname.install"
 		}
@@ -93,7 +94,7 @@ $modi eval {
 	}
 
 	proc fput {name code section} {
-		global dotfuncs pbfuncs
+		global dotfuncs pbfuncs pkgname
 
 		if {$name in $dotfuncs} {
 			initdotfunc $name
@@ -126,6 +127,37 @@ $modi eval {
 			lappend $dest [lindex $src $idx]
 			set src [lreplace $src $idx $idx]
 		}
+	}
+
+	proc splitdep {dep} {
+		set re {(?x) ^ ([^<>=]+) ([<>]=?.+)? $}
+		if {[regexp $re $dep -> name cmp]} {
+			return [list $name $cmp]
+		} else {
+			error "Invalid dependency string: $dep"
+		}
+	}
+
+	proc setdep {type newdep} {
+		if {! [string match *depends $type]} {
+			error "setdep can only be used with depends fields"
+		}
+		upvar #0 $type deps
+		if {! [info exists deps]} {
+			error "Unknown dependency field: $type"
+		}
+
+		lassign [splitdep $newdep] depname newcmp
+		for {set i 0} {$i < [llength $deps]} {incr i} {
+			set dep [lindex $deps $i]
+			lassign [splitdep $dep] name cmp
+			if {$name eq $depname} {
+				set deps [lreplace $deps $i $i $name$newcmp]
+				return
+			}
+		}
+
+		error "$name was not found in $type"
 	}
 }
 

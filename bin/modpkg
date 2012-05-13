@@ -15,7 +15,6 @@ set dotfuncs {pre_install post_install
 
 proc scanfields {inchan} {
 	global pkgdata
-	seek $inchan 0
 
 	set fld {}
 	while {[gets $inchan line] >= 0} {

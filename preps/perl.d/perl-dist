@@ -430,8 +430,7 @@ sub main
 		'pkgver'  => $ver,
 		'pkgdesc' => $meta->{'abstract'},
 		'arch' => (xsdist($distdir) ? ['i686', 'x86_64'] : 'any'),
-		'distdir' => qq{"\$srcdir/$distdir"},
-		'customvars' => 'distdir',
+		'dir' => "\$srcdir/$distdir",
 		%$deps,
 	);
 

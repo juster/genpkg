@@ -1,16 +1,22 @@
 #!/usr/bin/awk -f
 
 BEGIN {
-	fieldstr = "pkgname pkgver pkgrel pkgdesc epoch" \
+	fieldstr = "pkgname _ver pkgver pkgrel pkgdesc epoch" \
 		" *arch *license *options" \
 		" install changelog" \
 		" *depends *makedepends *checkdepends *optdepends" \
 		" *conflicts *provides" \
-		" url *source *noextract *md5sums *sha512sums"
+		" url *source *noextract *md5sums *sha512sums" \
+		" _dir"
 	max = split(fieldstr, fields)
 	for(i=1; i<=max; i++) {
-		if(sub(/^[*]/, "", fields[i])) arrfield[fields[i]] = 1;
-		else strfield[fields[i]] = 1;
+		if(sub(/^[*]/, "", fields[i])){
+			arrfield[fields[i]] = 1
+		}else if(sub(/^_/, "", fields[i])){
+			cfield[fields[i]] = 1
+		}else{
+			strfield[fields[i]] = 1
+		}
 	}
 
 	COLS = 78; FS = "\n"; RS = ""
@@ -22,15 +28,6 @@ $1 == "packager" { packager = $2 }
 
 $1 == "maintainer" { maintainer = $2 }
 
-$1 ~ /depends$|conflicts|provides|source/ { quotevals() }
-
-$1 == "pkgdesc" {
-	gsub(/[$"`]/, "\\\\&", $2)
-	$2 = sprintf("\"%s\"", $2)
-}
-
-$1 == "pkgverfmt" { pkgverfmt = $2 }
-
 $1 == "customvars" {
 	for(i = 2; i <= NF; i++){
 		customvars[i - 1] = $i
@@ -39,7 +36,8 @@ $1 == "customvars" {
 }
 
 {
-	if(strfield[$1]){
+	quotevals()
+	if(($1 in strfield) || ($1 in cfield)){
 		output[$1] = $2
 	}else {
 		arrtxt = wraparray(length($1) + 2)
@@ -62,15 +60,21 @@ END {
 	print ""
 
 	OFS = "="; ORS = "\n";
-	for(i=1; i<=max; i++){
-		name = fields[i]
-		if(name in output){
-			print name, output[name]
-		}
-	}
 	for(i = 1; i <= customlen; i++){
 		v = customvars[i]
 		print "_" v, unk[v]
+	}
+	for(i=1; i<=max; i++){
+		name = fields[i]
+		if(!(name in output)){
+			continue
+		}
+
+		if(name in cfield){
+			print "_" name, output[name]
+		}else{
+			print name, output[name]
+		}
 	}
 }
 
@@ -112,6 +116,11 @@ function quotevals ()
 
 function bashquote (val)
 {
-	if(val ~ /[$]/) return sprintf("\"%s\"", val)
-	return sprintf("'%s'", val)
+
+	if(val ~ /[$'"`]/){
+		gsub(/[$"`]/, "\\\\&", $2)
+		return sprintf("\"%s\"", val)
+	}
+	if(val ~ / /) return sprintf("'%s'", val)
+	return val
 }

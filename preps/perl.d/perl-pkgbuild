@@ -94,6 +94,14 @@ ENDTXT
 %s
 ENDTXT
 
+	# Be a little paranoid, but we don't need PERL_AUTOINSTALL here.
+	# TODO: make this hack prettier
+	if($type eq 'MM'){
+		$funcs{'check'}{'prefix'} .= functxt(<<'ENDTXT', 'PERL_MM_DEFAULT=1', 'PERL5LIB');
+export %s
+unset %s
+ENDTXT
+	}
 	$funcs{'check'}{'body'} = functxt("%s test", $make);
 
 	$funcs{'package'}{'body'} = functxt(<<'ENDTXT', $make, $iargs);

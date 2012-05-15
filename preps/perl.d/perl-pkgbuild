@@ -97,7 +97,7 @@ ENDTXT
 	# Be a little paranoid, but we don't need PERL_AUTOINSTALL here.
 	# TODO: make this hack prettier
 	if($type eq 'MM'){
-		$funcs{'check'}{'beg'} .= functxt(<<'ENDTXT', 'PERL_MM_DEFAULT=1', 'PERL5LIB');
+		$funcs{'check'}{'beg'} .= functxt(<<'ENDTXT', 'PERL_MM_USE_DEFAULT=1', 'PERL5LIB');
 export %s
 unset %s
 ENDTXT

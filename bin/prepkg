@@ -22,18 +22,6 @@ basicmeta()
 	return 0
 }
 
-prependmeta()
-{
-	if basicmeta | cat - "$1" > "$1.new"
-	then
-		mv "$1.new" "$1"
-		return 0
-	else
-		rm "$1.new"
-		return 1
-	fi
-}
-
 case $# in
 0)	echo "usage: $prog [package name]" 1>&2
 	exit 1
@@ -52,12 +40,8 @@ do
 	prepret=$?
 	
 	case "$prepret" in
-	0)	if prependmeta PKGDATA
-		then
-			exit 0
-		else
-			err "failed to prepend to PKGDATA"
-		fi ;;
+	0)	basicmeta
+		exit 0 ;;
 	1)	err "$flav encountered an error" ;;
 	2)	;; # loop
 	*)	err "$flav returned error code $metaret" ;;

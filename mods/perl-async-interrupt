@@ -1,0 +1,2 @@
+# Marc uses numeric version strings.
+set pkgver [format %.02f $pkgver]

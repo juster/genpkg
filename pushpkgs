@@ -41,10 +41,9 @@ do
 	fi
 
 	cd "$REPODIR" || exit 1
-	echo "$REPODIR/$pkg"
+	svn update "$pkg" >/dev/null 2>&1
 	if [ -d "$pkg" ]
 	then
-		svn update "$pkg"
 		rm -rf "$pkg/trunk/"*
 	fi
 
@@ -54,6 +53,7 @@ do
 	cd "$pkg/trunk"
 	prependid
 	svnadd >/dev/null 2>&1
+	echo "$REPODIR/$pkg"
 
 	cd "$pkgdir"
 done

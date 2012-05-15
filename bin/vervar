@@ -39,7 +39,7 @@ END {
 	}else{
 		# Print the $_ver variable if it is different
 		print "ver", ver
-		vervar = "ver"
+		vervar = "_ver"
 	}
 	print "pkgver", pkgver
 

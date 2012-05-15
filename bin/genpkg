@@ -52,7 +52,7 @@ scanfield()
 {
 	awk -v fld="$1" '
 BEGIN { FS = "\n"; RS = "" }
-$1 = fld { print $2; found = 1; exit }
+$1 == fld { print $2; found = 1; exit }
 END { exit !found }
 '
 	return $?

@@ -7,7 +7,8 @@ set pbfields {pkgname pkgver pkgrel pkgdesc pkgbase
 	groups arch backup
 	depends makedepends checkdepends optdepends
 	conflicts provides replaces
-	options}
+	options
+	dir ver}
 set pbfuncs {build check package}
 set dotfuncs {pre_install post_install
 	pre_upgrade post_upgrade
@@ -165,6 +166,11 @@ $modi eval [read $modch]
 foreach name $pbfields {
 	if {[$modi eval info exists $name]} {
 		set pkgdata($name) [$modi eval set $name]
+	}
+}
+if {[info exists pkgdata(customvars)]} {
+	foreach cvar $pkgdata(customvars) {
+		set pkgdata($cvar) [$modi eval set $cvar]
 	}
 }
 

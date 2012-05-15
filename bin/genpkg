@@ -128,7 +128,7 @@ do
 	fi
 
 	# Insert PKGBUILD fields into prefix of PKGBUILD body.
-	cat PKGDATA | vervar | injectdigs | pbfields |\
+	cat PKGDATA | injectdigs | vervar | pbfields |\
 		putpkgtree PKGBUILD prefix body || exit "$?"
 
 	# Merge split PKGTREE files into their own separate text files.

@@ -1,0 +1,7 @@
+set license custom:BSD
+lappend source LICENSE
+lappend depends openssl>=0.9.6
+fappend package {
+	install -d -m 755 "$pkgdir/usr/share/licenses/perl-net-ssleay"
+	install -m 644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/perl-net-ssleay/LICENSE"
+}

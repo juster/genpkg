@@ -121,6 +121,6 @@ function bashquote (val)
 		gsub(/[$"`]/, "\\\\&", $2)
 		return sprintf("\"%s\"", val)
 	}
-	if(val ~ / /) return sprintf("'%s'", val)
+	if(val ~ /[ <>]/) return sprintf("'%s'", val)
 	return val
 }

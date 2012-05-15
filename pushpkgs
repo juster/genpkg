@@ -21,34 +21,35 @@ syncsvn()
 }
 
 
-if [ -z "$DEST" ]
+if [ -z "$REPODIR" ]
 then
-	echo "Specify the destination directory with the DEST env var." 1>&2
+	echo "Specify the destination directory with the REPODIR env var." 1>&2
 	exit 1
 fi
 
-cd pkg || exit 1
+[ "$PKGDEST" ] || PKGDEST=~/pkg/dest
+
+cd "$PKGDEST" || exit $?
 pkgdir=$(pwd)
 
-while [ $# -gt 0 ]
+for pkg
 do
-	pkg=$1 ; shift
 	if [ ! -d "$pkg" ]
 	then
 		echo "pkg/$pkg was not found." 1>&2
 		continue
 	fi
 
-	echo "$DEST/$pkg"
-	if [ -d "$DEST/$pkg" ]
+	echo "$REPODIR/$pkg"
+	if [ -d "$REPODIR/$pkg" ]
 	then
-		rm -rf "$DEST/$pkg/trunk/"*
+		rm -rf "$REPODIR/$pkg/trunk/"*
 	fi
 
-	mkdir -p "$DEST/$pkg/"{trunk,repos}
-	cp -r -t "$DEST/$pkg/trunk" "$pkg"/* 
+	mkdir -p "$REPODIR/$pkg/"{trunk,repos}
+	cp -r -t "$REPODIR/$pkg/trunk" "$pkg"/* 
 
-	cd "$DEST/$pkg/trunk"
+	cd "$REPODIR/$pkg/trunk"
 	prependid
 	syncsvn >/dev/null 2>&1
 

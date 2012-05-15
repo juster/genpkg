@@ -13,7 +13,7 @@ prependid()
 }
 
 # Make sure that the package directories are added to the SVN repo.
-syncsvn()
+svnadd()
 {
 	svn add --parents PKGBUILD ../repos
 	# Make sure that the Id keyword-property is active.
@@ -40,18 +40,20 @@ do
 		continue
 	fi
 
+	cd "$REPODIR" || exit 1
 	echo "$REPODIR/$pkg"
-	if [ -d "$REPODIR/$pkg" ]
+	if [ -d "$pkg" ]
 	then
-		rm -rf "$REPODIR/$pkg/trunk/"*
+		svn update "$pkg"
+		rm -rf "$pkg/trunk/"*
 	fi
 
-	mkdir -p "$REPODIR/$pkg/"{trunk,repos}
-	cp -r -t "$REPODIR/$pkg/trunk" "$pkg"/* 
+	mkdir -p "$pkg/"{trunk,repos}
+	cp -r -t "$pkg/trunk" "$PKGDEST/$pkg"/* 
 
-	cd "$REPODIR/$pkg/trunk"
+	cd "$pkg/trunk"
 	prependid
-	syncsvn >/dev/null 2>&1
+	svnadd >/dev/null 2>&1
 
 	cd "$pkgdir"
 done

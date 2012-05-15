@@ -1,0 +1,52 @@
+#!/usr/bin/awk -f
+##
+# Replaces version strings with the $pkgver variable or $_ver variable.
+# If the ver field is the same as pkgver then ver is discarded (not printed)
+# and version strings are replaced with $pkgver.
+#
+# The path and source fields are searched and replaced.
+
+BEGIN {
+	OFS = FS = "\n"
+	RS = ""
+	ORS = "\n\n"
+	prog = "vervar"
+	replflds["path"] = replflds["source"] = 1
+}
+
+$1 == "ver" { ver = $2; next }
+$1 == "pkgver" { pkgver = $2; next }
+$1 in replflds {
+	repl[$1] = $0
+	next
+}
+1
+
+END {
+	if(error) {
+		exit(error)
+	}
+	if(!ver){
+		print prog ": error: ver field is missing (or zero)" | "cat 1>&2"
+		exit(1)
+	}
+
+	if("" pkgver == ver){
+		# Don't use the $_ver variable if $pkgver and $_ver are identical.
+		skipver = 1
+		vervar = "pkgver"
+		ver = pkgver
+	}else{
+		# Print the $_ver variable if it is different
+		print "ver", ver
+		vervar = "ver"
+	}
+	print "pkgver", pkgver
+
+	# Replace the version string with the version parameter.
+	gsub(/([.])/, "\\\\&", ver)
+	for(f in repl){
+		sub(ver, "$" vervar, repl[f])
+		print repl[f]
+	}
+}

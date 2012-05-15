@@ -102,8 +102,10 @@ do
 	[ -d PKGTREE ] && rm -rf PKGTREE
 	mkdir PKGTREE
 
+	# Duplicate the version in case modpkg modifies it. vervar will remove a
+	# redundant ver field that is the same as pkgver.
 	trap 'rm -f PKGDATA' 1 2 15
-	if PREPSPATH="$prepd" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
+	if PREPSPATH="$prepd" PKGVAR="$vard" prepkg "$pkg" | dupver > PKGDATA
 	then
 		echo "$pkgd/$pkg"
 	else
@@ -115,8 +117,8 @@ do
 	mod="$modsd/$pkg"
 	if [ -f "$mod" -a -r "$mod" ]
 	then
-		trap 'rm PKGDATA.new' 1 2 15
-		if cat PKGDATA | dupver | modpkg "$mod" > PKGDATA.new
+		trap 'rm -f PKGDATA.new' 1 2 15
+		if modpkg "$mod" < PKGDATA > PKGDATA.new
 		then
 			echo "Modified with $mod." 1>&2
 			mv PKGDATA.new PKGDATA

@@ -11,7 +11,7 @@ BEGIN {
 	RS = ""
 	ORS = "\n\n"
 	prog = "vervar"
-	replflds["path"] = replflds["source"] = 1
+	replflds["dir"] = replflds["source"] = 1
 }
 
 $1 == "ver" { ver = $2; next }

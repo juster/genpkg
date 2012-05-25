@@ -50,10 +50,6 @@ $1 == "customvars" {
 }
 
 END {
-	if(pkgverfmt){
-		output["pkgver"] = sprintf(pkgverfmt, output["pkgver"])
-	}
-
 	if(!maintainer && !packager) { packager = "Anonymous" }
 	if(maintainer) print "# Maintainer: " maintainer
 	else if(packager) print "# Packager: " packager

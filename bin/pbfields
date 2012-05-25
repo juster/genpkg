@@ -25,9 +25,9 @@ BEGIN {
 
 NF < 2 { next }
 
-$1 == "packager" { packager = $2 }
+$1 == "packager" { packager = $2; next }
 
-$1 == "maintainer" { maintainer = $2 }
+$1 == "maintainer" { maintainer = $2; next }
 
 $1 == "customvars" {
 	for(i = 2; i <= NF; i++){

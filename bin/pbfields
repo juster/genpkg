@@ -9,13 +9,14 @@ BEGIN {
 		" url *source *noextract *md5sums *sha512sums" \
 		" _dir"
 	max = split(fieldstr, fields)
-	for(i=1; i<=max; i++) {
-		if(sub(/^[*]/, "", fields[i])){
-			arrfield[fields[i]] = 1
-		}else if(sub(/^_/, "", fields[i])){
-			cfield[fields[i]] = 1
+	for(i = 1; i <= max; i++){
+		f = fields[i]
+		if(sub(/^[*]/, "", f)){
+			arrfield[f] = 1
+		}else if(sub(/^_/, "", f)){
+			cfield[f] = 1
 		}else{
-			strfield[fields[i]] = 1
+			strfield[f] = 1
 		}
 	}
 

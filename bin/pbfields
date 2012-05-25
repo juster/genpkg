@@ -123,6 +123,7 @@ function qexpand (v)
 {
 	if(v ~ /[$']/){
 		gsub(/["`]/, "\\\\&", v)
+		gsub(/[$][(]/, "\\$(", v)
 		return sprintf("\"%s\"", v)
 	}else if(v ~ /[ <>`"]/){
 		return sprintf("'%s'", v)

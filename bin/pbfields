@@ -118,7 +118,7 @@ function bashquote (val)
 {
 
 	if(val ~ /[$'"`]/){
-		gsub(/[$"`]/, "\\\\&", $2)
+		gsub(/[$"`]/, "\\\\&", val)
 		return sprintf("\"%s\"", val)
 	}
 	if(val ~ /[ <>]/) return sprintf("'%s'", val)

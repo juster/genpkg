@@ -50,10 +50,13 @@ $1 == "customvars" {
 }
 
 END {
-	if(!maintainer && !packager) { packager = "Anonymous" }
-	if(maintainer) print "# Maintainer: " maintainer
-	else if(packager) print "# Packager: " packager
-	print ""
+	if(maintainer){
+		print "# Maintainer: " maintainer "\n"
+	}else if(packager){
+		print "# Packager: " packager "\n"
+	}else{
+		print "# Packager: Anonymous\n"
+	}
 
 	OFS = "="; ORS = "\n";
 	for(i = 1; i <= customlen; i++){

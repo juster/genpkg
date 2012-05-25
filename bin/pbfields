@@ -59,10 +59,7 @@ END {
 	}
 
 	OFS = "="; ORS = "\n";
-	for(i = 1; i <= customlen; i++){
-		v = customvars[i]
-		print "_" v, unk[v]
-	}
+
 	for(i=1; i<=max; i++){
 		name = fields[i]
 		if(!(name in output)){
@@ -74,6 +71,11 @@ END {
 		}else{
 			print name, output[name]
 		}
+	}
+
+	for(i = 1; i <= customlen; i++){
+		v = customvars[i]
+		print "_" v, unk[v]
 	}
 }
 

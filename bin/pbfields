@@ -118,11 +118,12 @@ function quotevals ()
 
 function bashquote (val)
 {
-
-	if(val ~ /[$'"`]/){
+	if(val ~ /'/){
 		gsub(/[$"`]/, "\\\\&", val)
 		return sprintf("\"%s\"", val)
+	}else if(val ~ /[ <>`$"]/){
+		return sprintf("'%s'", val)
+	}else{
+		return val
 	}
-	if(val ~ /[ <>]/) return sprintf("'%s'", val)
-	return val
 }

@@ -3,7 +3,6 @@
 prog=genpkg
 
 prepd=~/.genpkg/preps
-templd=~/.genpkg/templ
 modsd=~/pkg/mods
 pkgd=~/pkg/dest
 vard=~/.genpkg/var

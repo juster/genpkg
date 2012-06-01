@@ -104,20 +104,20 @@ do
 	# Duplicate the version in case modpkg modifies it. vervar will remove a
 	# redundant ver field that is the same as pkgver.
 	trap 'rm -f PKGDATA' 1 2 15
-	if PREPSPATH="$prepd" PKGVAR="$vard" prepkg "$pkg" | dupver > PKGDATA
-	then
-		echo "$pkgd/$pkg"
-	else
-		rm PKGDATA
-		exit "$?"
-	fi
+	PREPSPATH="$prepd" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
+	ret=$?
+	case $ret in
+	0)	echo "$pkgd/$pkg" ;;
+	*)	rm PKGDATA
+		exit $ret
+	esac
 	trap '' 1 2 15
 
 	mod="$modsd/$pkg"
 	if [ -f "$mod" -a -r "$mod" ]
 	then
 		trap 'rm -f PKGDATA.new' 1 2 15
-		if modpkg "$mod" < PKGDATA > PKGDATA.new
+		if cat PKGDATA | dupver | modpkg "$mod" > PKGDATA.new
 		then
 			echo "Modified with $mod." 1>&2
 			mv PKGDATA.new PKGDATA

@@ -26,12 +26,8 @@ END {
 	if(error) {
 		exit(error)
 	}
-	if(!ver){
-		print prog ": error: ver field is missing (or zero)" | "cat 1>&2"
-		exit(1)
-	}
 
-	if("" pkgver == ver){
+	if(!ver || "" pkgver == ver){
 		# Don't use the $_ver variable if $pkgver and $_ver are identical.
 		skipver = 1
 		vervar = "pkgver"

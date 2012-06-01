@@ -44,7 +44,7 @@ do
 		exit 0 ;;
 	1)	err "$flav encountered an error" ;;
 	2)	;; # loop
-	*)	err "$flav returned error code $metaret" ;;
+	*)	err "$flav returned error code $prepret" ;;
 	esac
 done
 

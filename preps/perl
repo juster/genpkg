@@ -24,7 +24,7 @@ sub matchdist
 	my $var = $ENV{'PKGVAR'}
 		or err('PKGVAR env variable is unset');
 
-	if(!-f "$var/cpandists" || -M "$var/cpandists" > 1) {
+	if(!-f "$var/cpan.dists" || -M "$var/cpan.dists" > 1) {
 		print STDERR "$PROG: Refreshing local CPAN data... ";
 		my $cwd = getcwd();
 		chdir $var or die "chdir: $!";
@@ -34,7 +34,7 @@ sub matchdist
 		chdir $cwd or die "chdir: $!";
 	}
 
-	open(DISTS, '<', "$var/cpandists") or err("open: $!");
+	open(DISTS, '<', "$var/cpan.dists") or err("open: $!");
 	while(<DISTS>) {
 		my @f = split;
 		my $d = lc $f[0]; $d =~ tr/-_/--/s;

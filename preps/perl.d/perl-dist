@@ -18,6 +18,7 @@ my %CoreMods = loadcore();
 package Convert;
 
 *DBG = *main::DBG;
+*vardir = *main::vardir;
 
 use LWP::UserAgent qw();
 use YAML::XS qw();
@@ -298,9 +299,9 @@ sub _distsofmods
 	return () if(@mods == 0);
 	@mods = _nocore(@mods);
 
-	my $var = _vardir();
+	my $var = vardir();
 	open my $fh, '<', "$var/cpan.mods"
-	  or die "$PROG: failed to open $var/cpanmods: $!";
+	  or die "$PROG: failed to open $var/cpan.mods: $!";
 
 	my %mods = map { ($_ => 1) } @mods;
 	my %dists;
@@ -335,12 +336,6 @@ sub _nocore
 		push @mods, $m unless(exists $CoreMods{$m});
 	}
 	return @mods;
-}
-
-sub _vardir
-{
-	return $ENV{'PKGVAR'}
-		or die "$PROG: PKGVAR env variable is unset\n";
 }
 
 #-----------------------------------------------------------------------------
@@ -595,9 +590,15 @@ sub _readmedesc
 	return undef;
 }
 
+sub vardir
+{
+	return $ENV{'PKGVAR'}
+		or die "$PROG: PKGVAR env variable is unset\n";
+}
+
 sub loadcore
 {
-	my $cmpath = _vardir() . '/perlcore.mods';
+	my $cmpath = vardir() . '/perlcore.mods';
 	unless(-f $cmpath){
 		print STDERR <<"END_ERR";
 $PROG: error: $cmpath is missing.

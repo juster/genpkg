@@ -31,13 +31,13 @@ NR < 10 { next }
 END {
     for (dist in dists) {
         ver = dists[dist]
-        print dist, ver, paths[dist] | "sort >cpandists"
+        print dist, ver, paths[dist] | "sort >cpan.dists"
     }
     close("sort >cpandists")
 
     # Prints modules out in sorted order, too!
     while(getline<"cpandists" > 0) {
-        print $1 "\n" mods[$1,$2] >"cpanmods"
+        print $1 "\n" mods[$1,$2] >"cpan.mods"
     }
 }
 

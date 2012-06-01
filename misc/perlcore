@@ -189,7 +189,7 @@ sub findmods
 		if($ver){
 			push @mods, [ $mod, $ver ];
 		}else{
-			warn "failed to find version in module file $path\n";
+			warn "failed to find version in $path\n";
 		}
 	}
 	return @mods;

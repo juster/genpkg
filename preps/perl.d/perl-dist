@@ -12,11 +12,13 @@ if(exists $ENV{'GENPKGDBG'}){
 	*DBG = sub { print STDERR "$PROG: DBG: ", @_ };
 }
 
+# Visible through entire file.
+my %CoreMods = loadcore();
+
 package Convert;
 
 *DBG = *main::DBG;
 
-use Module::CoreList;
 use LWP::UserAgent qw();
 use YAML::XS qw();
 use version qw();
@@ -186,7 +188,7 @@ sub _reqs2deps
 	# Filter out deps on 'perl' and any core modules that we can.
 	while(my ($name, $ver) = each(%$prereqs)) {
 		DBG("requires $name $ver\n");
-		my $cver = $Module::CoreList::version{$]}{$name};
+		my $cver = $CoreMods{$name};
 
 		if($name eq 'perl') {
 			$pkgdeps{'perl'} = _perldepver($ver);
@@ -297,7 +299,7 @@ sub _distsofmods
 	@mods = _nocore(@mods);
 
 	my $var = _vardir();
-	open my $fh, '<', "$var/cpanmods"
+	open my $fh, '<', "$var/cpan.mods"
 	  or die "$PROG: failed to open $var/cpanmods: $!";
 
 	my %mods = map { ($_ => 1) } @mods;
@@ -328,30 +330,11 @@ sub _distsofmods
 
 sub _nocore
 {
-	my(@mods) = @_;
-
-	my $cmpath = _vardir() . '/perlcore.mods';
-	unless(-f $cmpath){
-		print STDERR <<"END_ERR";
-$PROG: error: $cmpath is missing.
-******************************************************************************
-  This file should have been installed along with genpkg. Copy the file from
-  genpkg's source or generate it with the misc/perlcore script in genpkg's
-  source. Make sure to use the same version as the perl you are using.
-******************************************************************************
-END_ERR
-		exit 1;
+	my @mods;
+	for my $m (@_){
+		push @mods, $m unless(exists $CoreMods{$m});
 	}
-	open my $if, '<', $cmpath or die "$PROG: open $cmpath: $!";
-
-	my %mods = map { ($_ => 1) } @mods;
-	while(<$if>){
-		my($m) = split;
-		delete $mods{$m};
-	}
-
-	close $if;
-	return keys %mods;
+	return @mods;
 }
 
 sub _vardir
@@ -610,6 +593,32 @@ sub _readmedesc
 
 	close $fh;
 	return undef;
+}
+
+sub loadcore
+{
+	my $cmpath = _vardir() . '/perlcore.mods';
+	unless(-f $cmpath){
+		print STDERR <<"END_ERR";
+$PROG: error: $cmpath is missing.
+******************************************************************************
+  This file should have been installed along with genpkg. Copy the file from
+  genpkg's source or generate it with the misc/perlcore script in genpkg's
+  source. Make sure to use the same version as the perl you are using.
+******************************************************************************
+END_ERR
+		exit 1;
+	}
+
+	my %cm;
+	open my $if, '<', $cmpath or die "$PROG: open $cmpath: $!";
+	while(<$if>){
+		my($m, $v) = split;
+		$cm{$m} = $v;
+	}
+	close $if;
+	return %cm;
+
 }
 
 exit main(@ARGV);

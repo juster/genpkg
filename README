@@ -1,0 +1,30 @@
+IMPLEMENTATION NOTES
+
+Preparation
+The first stage is preparation performed by the prepkg script.
+Software releases (i.e. tarballs) must be fetched and general information
+about the package is determined from these downloaded files. Scripts
+called "preps" are each queried in turn to see if the specified package
+is one they recognize. Each package source has its own prep script, though
+currently only one exists for the CPAN. The prep creates a PKGDATA file,
+a simple key/value text file, and initializes the PKGBUILD functions by using
+putpkgtree(1). prepkg's duty is then finished.
+
+Modification
+While creating perl packages I found that automated techniques
+could not always generate exactly what I wanted. Human intervention would
+sometimes be inevitable. In case modification is necessary, a mod script
+can be created. Mods are written in tcl and usually stored in
+$HOME/pkg/mods/. If a mod script with the same name as the package
+is present, the modifications are performed on the PKGDATA and PKGBUILD.
+These duties are handled by modpkg(1).
+
+Finalization
+Now the package data and functions are merged together into a PKGBUILD.
+injectdigs(1) is used to generate the MD5 and SHA digests for the
+package files in the source array, as well as any patches or files added.
+vervar(1) is used to replace version strings in PKGBUILD fields with
+$pkgver. After the PKGDATA(5) stream is fed through these
+filters, the pbfields(1) script converts the fields into a PKGBUILD header.
+All of the sections of the PKGBUILD are then merged together and written
+to a file with the help of the getpkgtree(1) script.

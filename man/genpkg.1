@@ -35,46 +35,16 @@ supporting directory as well.
 .IP \fB$HOME/.genpkg/var/\fR
 Data that needs to be saved between invocations by preparation
 scripts is stored here. These are usually indices of releases.
-.SH IMPLEMENTATION NOTES
-.SS Preparation
-.PP
-The first stage is preparation performed by the \fIprepkg(1)\fR script.
-Software releases (i.e. tarballs) must be fetched and general information
-about the package is determined from these downloaded files. Scripts
-called \fI"preps"\fR are each queried in turn to see if the specified package
-is one they recognize. Each package source has its own prep script, though
-currently only one exists for the CPAN. The prep creates a PKGDATA file,
-a simple key/value text file, and initializes the PKGBUILD functions by using
-\fIputpkgtree(1)\fR. \fBprepkg\fR's duty is then finished.
-.SS Modification
-.PP
-While creating perl packages I found that automated techniques
-could not always generate exactly what I wanted. Human intervention would
-sometimes be inevitable. In case modification is necessary, a \fImod\fR script
-can be created. Mods are written in tcl and usually stored in
-\fI$HOME/pkg/mods/\fR. If a mod script with the same name as the package
-is present, the modifications are performed on the PKGDATA and PKGBUILD.
-These duties are handled by \fImodpkg(1)\fR.
-.SS Finalization
-.PP
-Now the package data and functions are merged together into a PKGBUILD.
-\fIinjectdigs(1)\fR is used to generate the MD5 and SHA digests for the
-package files in the source array, as well as any patches or files added.
-\fIvervar(1)\fR is used to replace version strings in PKGBUILD fields with
-\fB$pkgver\fR. After the \fIPKGDATA(5)\fR stream is fed through these
-filters, the \fIpbfields(1)\fR script converts the fields into a PKGBUILD header.
-All of the sections of the PKGBUILD are then merged together and written
-to a file with the help of the \fIgetpkgtree(1)\fR script.
 .SH SEE ALSO
 .PP
-.BR prepkg(1) ,
-.BR modpkg(1) ,
-.BR pbfields(1) ,
-.BR injectdigs(1) ,
-.BR vervar(1) ,
-.BR putpkgtree(1) ,
-.BR getpkgtree(1) ,
-.BR PKGDATA(5)
+.BR prepkg (1),
+.BR modpkg (1),
+.BR pbfields (1),
+.BR injectdigs(1),
+.BR vervar (1),
+.BR putpkgtree (1),
+.BR getpkgtree (1),
+.BR PKGDATA (5)
 .SH AUTHOR
 .PP
 Justin "juster" Davis <jrcd83@gmail.com>

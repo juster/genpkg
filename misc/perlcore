@@ -20,7 +20,7 @@ sub evalver
 		chomp;
 		my $ver = do { no strict; eval };
 		return $ver unless($@);
-		warn(qq{$path:$. bad version string "$_"\n});
+		die qq{$path:$. bad version string "$_"\n};
 	}
 
 	close($fh);

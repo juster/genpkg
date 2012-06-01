@@ -6,8 +6,7 @@ prog=setup
 binfiles='genpkg prepkg modpkg pbfields putpkgtree getpkgtree
 	injectdigs vervar'
 preps='perl perl.d/
-	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-pkgbuild
-	perl.d/scrapecore'
+	perl.d/fetchcpan perl.d/perl-dist perl.d/perl-pkgbuild'
 
 md()
 {

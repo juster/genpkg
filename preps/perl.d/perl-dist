@@ -330,16 +330,14 @@ sub _nocore
 {
 	my(@mods) = @_;
 
-	my $cmpath = _vardir() . '/coremods';
+	my $cmpath = _vardir() . '/perlcore.mods';
 	unless(-f $cmpath){
-		my $scpath = ($ENV{'PREPSPATH'}
-			? "$ENV{'PREPSPATH'}/perl.d/scrapecore"
-			: q{genpkg's preps/perl.d/scrapecore});
 		print STDERR <<"END_ERR";
 $PROG: error: $cmpath is missing.
 ******************************************************************************
-  You must generate it with $scpath.
-  Run it against the version of perl that is the official package.
+  This file should have been installed along with genpkg. Copy the file from
+  genpkg's source or generate it with the misc/perlcore script in genpkg's
+  source. Make sure to use the same version as the perl you are using.
 ******************************************************************************
 END_ERR
 		exit 1;

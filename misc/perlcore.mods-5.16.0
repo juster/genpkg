@@ -1,4 +1,5 @@
 ANSIColor 3.01 *
+APItest 0.38 *
 AnyDBM_File 1.01 *
 App::Cpan 1.5701
 App::Prove 3.23
@@ -12,8 +13,13 @@ Archive::Tar::File 1.82 *
 Attribute::Handlers 0.93
 AutoLoader 5.72
 AutoSplit 1.06
+B 1.34 *
+B::Concise 0.89 *
 B::Lint 1.14
 B::Lint::Debug 1.14
+B::Showlex 1.03 *
+B::Terse 1.06 *
+B::Xref 1.03 *
 Base64 3.13 *
 Benchmark 1.13 *
 CGI 3.59
@@ -99,6 +105,7 @@ DBM_Filter::int32 0.02 *
 DBM_Filter::null 0.02 *
 DBM_Filter::utf8 0.02 *
 DB_File 1.826
+DCLsym 1.05 *
 Debug 1.17
 Deparse 1.14 *
 Devel::InnerPackage 0.4
@@ -191,6 +198,7 @@ ExtUtils::Typemaps::Type 3.16
 ExtUtils::XSSymSet 1.2 *
 ExtUtils::testlib 6.63_02
 Fatal 2.10
+Fcntl 1.11 *
 File 0.1200 *
 File::Basename 2.84 *
 File::CheckTree 4.41
@@ -211,13 +219,19 @@ File::Spec::Unix 3.39_02
 File::Spec::VMS 3.39_02
 File::Spec::Win32 3.39_02
 File::stat 1.05 *
+FileCache 1.08 *
 FileHandle 2.02 *
 Filter::Simple 0.88
 FindBin 1.51 *
+GDBM_File 1.14 *
 Getopt::Long 2.38
 Getopt::Std 1.07 *
+Glob 1.17 *
 HTTP::Tiny 0.017
+Hash::Util 0.11 *
+Hash::Util::FieldHash 1.10 *
 HiRes 1.9725 *
+Hostname 1.16 *
 I18N::Collate 1.02
 I18N::LangTags 0.38 *
 I18N::LangTags::Detect 1.05 *
@@ -259,10 +273,13 @@ IO::Uncompress::RawInflate 2.048
 IO::Uncompress::Unzip 2.048
 IPC::Cmd 0.76
 IPC::Msg 2.03
+IPC::Open2 1.04 *
+IPC::Open3 1.12 *
 IPC::Semaphore 2.03
 IPC::SharedMem 2.03
 IPC::SysV 2.03
 JSON::PP 2.27200
+Langinfo 0.08_02 *
 List::Util 1.23
 List::Util::PP 1.23 *
 List::Util::XS 1.23
@@ -354,7 +371,9 @@ Module::Loaded 0.08
 Module::Metadata 1.000009
 Module::Pluggable 4.0
 Module::Pluggable::Object 3.9
+NDBM_File 1.12 *
 NEXT 0.65
+NamedCapture 0.08 *
 Net::Cmd 2.29
 Net::Config 1.11
 Net::Domain 2.20
@@ -375,10 +394,15 @@ Net::netent 1.00 *
 Net::protoent 1.00 *
 Net::servent 1.01 *
 Normalize 1.14
+O 1.01 *
+ODBM_File 1.12 *
 Object::Accessor 0.42
+Opcode 1.23 *
+POSIX 1.30 *
 Package::Constants 0.02
 Params::Check 0.32
 Parse::CPAN::Meta 1.4402
+Peek 1.08 *
 Perl::OSType 1.002
 PerlIO 1.07 *
 PerlIO::via::QuotedPrint 0.06
@@ -386,6 +410,7 @@ Piece 1.20_01 *
 Pod::Checker 1.51
 Pod::Escapes 1.04
 Pod::Find 1.51
+Pod::Html 1.1502 *
 Pod::InputObjects 1.51
 Pod::LaTeX 0.60
 Pod::Man 2.25
@@ -441,6 +466,7 @@ Pod::Text::Overstrike 2.04
 Pod::Text::Termcap 2.06
 Pod::Usage 1.51
 QuotedPrint 3.13 *
+SDBM_File 1.09 *
 Safe 2.31_01
 Scalar::Util 1.23
 Scalar::Util::PP 1.23 *
@@ -449,6 +475,7 @@ SelectSaver 1.02 *
 SelfLoader 1.20
 Socket 2.001
 Soundex 3.03_01 *
+Stdio 2.4 *
 Storable 2.34
 Symbol 1.07 *
 Syslog 0.29 *
@@ -519,6 +546,7 @@ Tie::Array 1.05 *
 Tie::File 0.98
 Tie::Handle 4.2 *
 Tie::Hash 1.04 *
+Tie::Memoize 1.1 *
 Tie::RefHash 1.39
 Tie::Scalar 1.02 *
 Tie::StdHandle 4.2 *
@@ -527,14 +555,18 @@ Time::Local 1.2000
 Time::gmtime 1.03 *
 Time::localtime 1.02 *
 Time::tm 1.00 *
+Typemap 0.08 *
 UNIVERSAL 1.11 *
 Unicode::UCD 0.43 *
 User::grent 1.01 *
 User::pwent 1.00 *
 Version::Requirements 0.101022
 Win32 0.44
+Win32CORE 0.02 *
 Zlib 1.10 *
 _charnames 1.31 *
+arybase 0.05 *
+attributes 0.19 *
 autodie 2.10
 autodie::exception 2.10
 autodie::exception::system 2.10
@@ -550,6 +582,7 @@ charnames 1.30 *
 constant 1.23
 deprecate 0.02 *
 diagnostics 1.28 *
+encoding 0.15 *
 encoding::warnings 0.11
 feature 1.27 *
 fields 2.16
@@ -560,11 +593,16 @@ inc::latest::private 0.39_01
 integer 1.00 *
 less 0.03 *
 locale 1.01 *
+mmap 0.010 *
+mro 1.09 *
 open 1.10 *
+ops 1.02 *
 overload 1.18 *
 overloading 0.02 *
 parent 0.225
 perlfaq 5.0150039
+re 0.19 *
+scalar 0.14 *
 sigtrap 1.06 *
 sort 2.01 *
 strict 1.07 *
@@ -574,6 +612,7 @@ threads::shared 1.40
 utf8 1.09 *
 vars 1.02 *
 version 0.99
+via 0.12 *
 vmsish 1.03 *
 warnings 1.13 *
 warnings::register 1.02 *

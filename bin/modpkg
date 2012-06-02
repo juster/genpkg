@@ -124,7 +124,7 @@ $modi eval {
 		foreach pat $args {
 			set idx [lsearch -glob $src "$pat*"]
 			if {$idx == -1} { error "$pat was not found in $srcname" }
-			lappend $dest [lindex $src $idx]
+			lappend dest [lindex $src $idx]
 			set src [lreplace $src $idx $idx]
 		}
 	}

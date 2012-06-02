@@ -13,7 +13,8 @@ if(exists $ENV{'GENPKGDBG'}){
 }
 
 # Visible through entire file.
-my %CoreMods = loadcore();
+my (%CoreMods, %CoreOnly);
+loadcore();
 
 package Convert;
 
@@ -331,11 +332,7 @@ sub _distsofmods
 
 sub _nocore
 {
-	my @mods;
-	for my $m (@_){
-		push @mods, $m unless(exists $CoreMods{$m});
-	}
-	return @mods;
+	return grep { not $CoreOnly{$_} } @_;
 }
 
 #-----------------------------------------------------------------------------
@@ -611,15 +608,13 @@ END_ERR
 		exit 1;
 	}
 
-	my %cm;
 	open my $if, '<', $cmpath or die "$PROG: open $cmpath: $!";
 	while(<$if>){
-		my($m, $v) = split;
-		$cm{$m} = $v;
+		my($m, $v, $coreonly) = split;
+		$CoreMods{$m} = $v;
+		$CoreOnly{$m} = 1 if($coreonly);
 	}
 	close $if;
-	return %cm;
-
 }
 
 exit main(@ARGV);

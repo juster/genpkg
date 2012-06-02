@@ -30,7 +30,10 @@ sub evalver
 # ----------------------------------------
 
 package CoreDist;
+
 use File::Basename qw(basename);
+use File::Find qw();
+*findfile = *File::Find::find;
 
 sub modname
 {
@@ -115,28 +118,40 @@ sub scan_distroot
 {
 	my ($distroot) = @_;
 	opendir my $cpand, "$distroot" or die("failed to open $distroot");
-	my @dists = grep { !/^\./ && -d "$distroot/$_" } readdir $cpand;
+	my @dists = grep { !/^[.]/ && -d "$distroot/$_" } readdir $cpand;
 	closedir $cpand;
 
 	my @found;
-	for my $dist (@dists){
-		my $distdir = "$distroot/$dist";
-		my $mv = (module_ver($dist, $distdir)
-			|| changelog_ver($dist, $distdir)
-			|| verfile_ver($dist, $distdir));
-		if($mv){
-			push @found, $mv;
-		}else{
-			warn "failed to find version for $dist\n";
-		}
+	for my $ddir (map { "$distroot/$_/" } @dists){
+		$ddir .= 'lib/' if(-d "$ddir/lib");
+		my $finder = sub {
+			return unless(/[.]pm$/);
+			return if(m{/t/});
+	
+			my $p = $_;
+			s/^\Q$ddir\E//;
+			s{^lib/}{};
+			s{[.]pm$}{};
+			s{/}{::}g;
+			my $m = $_;
+	
+			my $v = Common::evalver($p, $m);
+			if($v){
+				push @found, [ $m, $v ];
+			}else{
+				#warn "failed to find version in $p\n";
+			}
+		};
+		findfile({ 'no_chdir' => 1, 'wanted' => $finder }, $ddir);
 	}
+
 	return @found;
 }
 
 sub findmods
 {
 	my($srcdir) = @_;
-	return map { scan_distroot($_) } glob "$srcdir/{cpan,dist,ext}";
+	return map { scan_distroot($_) } glob "$srcdir/{cpan,dist}";
 }
 
 # ----------------------------------------
@@ -200,51 +215,56 @@ sub findmods
 
 package main;
 
-sub _delmatch
+sub _delmods
 {
-	my($mvs, $findus) = @_;
-	for(@$mvs){
+	my $coreonly = shift;
+	for(@_){
 		my($m) = split;
-		delete $findus->{$m};
+		delete $coreonly->{$m};
 	}
 	return;
 }
 
-sub coreonly
+sub printmods
 {
-	my %mods = map { @$_ } @_;
-	my $var = $ENV{'PKGVAR'} || "$ENV{'HOME'}/.genpkg/var";
-	my $path = "$var/cpanmods";
-	unless(-f $path){
-		die "$0: $path is missing. Generate it with fetchcpan.\n";
-	}
-	open my $if, '<', $path or die "open $path failed: $!";
+	my($mods, $mpath) = @_;
+	my %coreonly = map { @$_ } @$mods;
 
-	my @dists;
-	local $/ = qq{\n\n};
-	while(<$if>){
-		last unless(%mods);
-		my($dist, @dms) = split /\n/;
-		next if(defined delete $mods{$dist});
-		_delmatch(\@dms, \%mods);
+	# Remove mods from the set which are also available from CPAN.
+	{
+		local $/ = qq{\n\n};
+		open my $if, '<', $mpath or die "open $mpath failed: $!";
+		while(<$if>){
+			my($dist, @dms) = split /\n/;
+			_delmods(\%coreonly, @dms);
+		}
+		close $if;
 	}
 
-	close $if;
-	my @core;
-	for my $k (keys %mods){
-		push(@core, [ $k, $mods{$k} ]);
+	# Print a * in the third column for core-only modules.
+	for my $mv (@$mods){
+		my($m, $v) = @$mv;
+		printf "%s\n", join q{ }, $m, $v, ($coreonly{$m} ? q{*} : ());
 	}
-	return sort { $a->[0] cmp $b->[0] } @core;
 }
 
-my $perldir = shift or die"Usage: $0 [path to perl source directory]\n";
-die "$perldir is not a valid directory.\n" unless(-d $perldir);
+sub main
+{
+	die"Usage: $0 [path to perl source] [path to cpan.mods]\n" unless(@_ == 2);
+	my($perldir, $mpath) = @_;
 
-my @mods =
-	(CoreDist::findmods($perldir),
-	CoreLib::findmods($perldir));
+	die "$perldir is not a valid directory.\n" unless(-d $perldir);
+	die "$mpath is not a valid file.\n" unless(-f $mpath);
 
-## Embedded modules without any files...
-push @mods, [ 'Config' => 1 ];
+	my @mods = (CoreDist::findmods($perldir), CoreLib::findmods($perldir));
 
-print "@$_\n" for(coreonly(@mods));
+	## Embedded modules without any files...
+	push @mods, [ 'Config' => 1 ];
+
+	@mods = sort { $a->[0] cmp $b->[0] } @mods;
+	printmods(\@mods, $mpath);
+
+	return 0;
+}
+
+exit main(@ARGV);

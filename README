@@ -18,7 +18,7 @@ their proper place.
 Run ``./setup genpkg'' to install the bin/ scripts and initialize the ~/.genpkg
 directory. This also installs the preps/ scripts under ~/.genpkg. The setup
 script will create a ~/pkg/dest directory, the default location where package
-files like PKGBUILD are created.
+files like PKGBUILDs are created.
 
 Run ``./setup mods'' to install the modification scripts from the mods/
 directory to ~/pkg/mods.

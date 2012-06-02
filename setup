@@ -49,6 +49,12 @@ genpkg)
 		ins "preps/$p" ~/.genpkg
 	done
 	md ~/.genpkg/var
+
+	dst=~/.genpkg/var/perlcore.mods
+	install -m644 misc/perlcore.mods-5.16.0 $dst
+	echo $dst
+
+	md ~/pkg/dest
 	;;
 mods)
 	md ~/pkg/mods/

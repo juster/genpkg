@@ -62,7 +62,7 @@ sub scan_distroot
 sub findmods
 {
 	my($srcdir) = @_;
-	return map { scan_distroot($_) } glob "$srcdir/{cpan,dist}";
+	return map { scan_distroot($_) } glob "$srcdir/{cpan,dist,ext}";
 }
 
 # ----------------------------------------

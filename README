@@ -1,0 +1,29 @@
+genpkg
+A next generation package generator generator!
+jrcd83@gmail.com
+
+INSTALLATION
+
+genpkg is installed under the home directory. Sorry if you don't like it but
+adjusting things so it would work system-wide is not high on my priorities
+just yet. A directory called ~/.genpkg is created which contains the preps/
+dir contents and a var/ directory for storing data files (like perl module
+indices).
+
+Scripts inside the bin/ directory of the source distribution for genpkg are
+installed under ~/bin. For genpkg to work you must have the dir containing
+the scripts in your $PATH. The included setup script will copy files into
+their proper place.
+
+Run ``./setup genpkg'' to install the bin/ scripts and initialize the ~/.genpkg
+directory. This also installs the preps/ scripts under ~/.genpkg. The setup
+script will create a ~/pkg/dest directory, the default location where package
+files like PKGBUILD are created.
+
+Run ``./setup mods'' to install the modification scripts from the mods/
+directory to ~/pkg/mods.
+
+CONTACT
+
+Questions? Comments? Loathing? Send me email.
+Justin "juster" Davis <jrcd83@gmail.com>

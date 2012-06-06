@@ -3,10 +3,6 @@
 use warnings 'FATAL' => 'all';
 use strict;
 
-package Common;
-
-# ----------------------------------------
-
 package CoreDist;
 
 use File::Basename qw(basename);
@@ -14,35 +10,19 @@ use File::Find qw();
 *findfile = *File::Find::find;
 *grokver = *main::grokver;
 
-sub pathmod
-{
-	my($p) = @_;
-	for ($p){
-		s{^lib/}{};
-		s{[.]pm$}{};
-		s{/}{::}g;
-	}
-	return $p;
-}
-
 sub findpmfiles
 {
 	my($ddir) = @_;
-	$ddir = "$ddir/lib" if(-d "$ddir/lib");
 
-	my @modpaths;
+	my @paths;
 	my $finder = sub {
 		return unless(/[.]pm$/);
 		return if(m{/t/});
-		
-		my $p = $_;
-		s{^\Q$ddir\E/}{};
-		my $m = pathmod($_);
-		push @modpaths, [ $m, $p ];
+		push @paths, $_;
 	};
 
 	findfile({ 'no_chdir' => 1, 'wanted' => $finder }, $ddir);
-	return @modpaths;
+	return @paths;
 }
 
 sub solopm
@@ -62,22 +42,17 @@ sub solopm
 sub findpms # a foolhardy task!
 {
 	my($ddir) = @_;
-	return solopm($ddir) || findpmfiles($ddir);
+	return findpmfiles($ddir);
 }
 
 sub findpl
 {
 	my($p) = @_;
-
-	my $m;
 	my $d = $p;
 	$d =~  s{.+/}{};
-	$m = $d;
-	$m =~ s{-}{::}g;
-
 	$d =~ s{.+-}{};
 	$p = "${p}/${d}_pm.PL";
-	return (-f $p ? [ $m, $p ] : undef);
+	return (-f $p ? $p : ());
 }
 
 # scans a directory full of nicely separated dist. directories.
@@ -90,12 +65,11 @@ sub scan_distroot
 
 	my @found = map {
 		my $ddir = $_;
-		findpl($ddir) or findpms($ddir);
+		(findpl($ddir), findpms($ddir));
 	} map { "$distroot/$_" } @dists;
 
 	return map {
-		my(undef, $p) = @$_;
-		my($m, $v) = grokver($p);
+		my($m, $v) = grokver($_);
 		($m ? [ $m, $v ] : ());
 	} @found;
 }

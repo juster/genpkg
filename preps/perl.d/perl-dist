@@ -372,7 +372,6 @@ sub writepb
 {
 	my($ddir) = @_;
 
-	print STDERR "DBG: \$ddir = {$ddir}\n";
 	my $dtype = (-f "$ddir/Build.PL" ? "MB" : "MM");
 	if(system $PBPROG => $dtype){
 		return $? >> 8;

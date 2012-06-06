@@ -109,6 +109,7 @@ DCLsym 1.05 *
 Debug 1.17
 Deparse 1.14 *
 Devel::InnerPackage 0.4
+Devel::PPPort 3.20
 Devel::SelfStubber 1.05
 Digest 1.17
 Digest::SHA 5.71
@@ -117,6 +118,7 @@ Digest::file 1.16
 DirHandle 1.04 *
 Dumper 2.135_06 *
 Dumpvalue 1.17
+DynaLoader 1.14 *
 Encode::Alias 2.15
 Encode::CJKConstants 2.02
 Encode::CN::HZ 2.05
@@ -134,6 +136,7 @@ Encode::MIME::Name 1.01
 Encode::Unicode::UTF7 2.05
 English 1.05 *
 Env 1.03
+Errno 1.15 *
 Exporter 5.66
 Exporter::Heavy 5.64_01 *
 ExtUtils::CBuilder 0.280206
@@ -410,6 +413,7 @@ Piece 1.20_01 *
 Pod::Checker 1.51
 Pod::Escapes 1.04
 Pod::Find 1.51
+Pod::Functions 1.05 *
 Pod::Html 1.1502 *
 Pod::InputObjects 1.51
 Pod::LaTeX 0.60
@@ -563,6 +567,7 @@ User::pwent 1.00 *
 Version::Requirements 0.101022
 Win32 0.44
 Win32CORE 0.02 *
+XSLoader 0.16
 Zlib 1.10 *
 _charnames 1.31 *
 arybase 0.05 *
@@ -592,6 +597,7 @@ inc::latest 0.39_01
 inc::latest::private 0.39_01
 integer 1.00 *
 less 0.03 *
+lib 0.63
 locale 1.01 *
 mmap 0.010 *
 mro 1.09 *

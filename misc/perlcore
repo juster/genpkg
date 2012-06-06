@@ -25,6 +25,41 @@ sub pathmod
 	return $p;
 }
 
+sub findpms # a foolhardy task!
+{
+	my($ddir) = @_;
+	my @modpaths;
+
+	$ddir = "$ddir/lib" if(-d "$ddir/lib");
+	my $finder = sub {
+		return unless(/[.]pm$/);
+		return if(m{/t/});
+
+		my $p = $_;
+		s{^\Q$ddir\E/}{};
+		my $m = pathmod($_);
+		push @modpaths, [ $m, $p ];
+	};
+	findfile({ 'no_chdir' => 1, 'wanted' => $finder }, $ddir);
+
+	return @modpaths;	
+}
+
+sub findpl
+{
+	my($p) = @_;
+
+	my $m;
+	my $d = $p;
+	$d =~  s{.+/}{};
+	$m = $d;
+	$m =~ s{-}{::}g;
+
+	$d =~ s{.+-}{};
+	$p = "${p}/${d}_pm.PL";
+	return (-f $p ? [ $m, $p ] : undef);
+}
+
 # scans a directory full of nicely separated dist. directories.
 sub scan_distroot
 {
@@ -33,30 +68,16 @@ sub scan_distroot
 	my @dists = grep { !/^[.]/ && -d "$distroot/$_" } readdir $cpand;
 	closedir $cpand;
 
-	my @found;
-	for my $ddir (map { "$distroot/$_" } @dists){
-		for("$ddir/lib"){
-			$ddir = $_ if(-d $_);
-		}
-		my $finder = sub {
-			return unless(/[.]pm$/);
-			return if(m{/t/});
-	
-			my $p = $_;
-			s{^\Q$ddir\E/}{};
-			my $m = pathmod($_);
-	
-			my $v = findver($p, $m);
-			if($v){
-				push @found, [ $m, $v ];
-			}else{
-				#warn "failed to find version in $p\n";
-			}
-		};
-		findfile({ 'no_chdir' => 1, 'wanted' => $finder }, $ddir);
-	}
+	my @found = map {
+		my $ddir = $_;
+		findpl($ddir) or findpms($ddir);
+	} map { "$distroot/$_" } @dists;
 
-	return @found;
+	return map {
+		my($m, $p) = @$_;
+		my $v = findver($p, $m);
+		($v ? [ $m, $v ] : ());
+	} @found;
 }
 
 sub findmods

@@ -57,15 +57,14 @@ END { exit !found }
 	return $?
 }
 
-# Create an extra "ver" field in case the packager needs to modify
-# the version.
+# Create an extra "ver" field in case the packager needs to modify the pkgver.
 dupver()
 {
 	awk '
 BEGIN { OFS = FS = "\n"; RS = ""; ORS = "\n\n" }
 $1 == "pkgver" { pkgver = $2 }
 1
-END { print "ver", pkgver }
+END { if(pkgver) print "ver", pkgver }
 '
 }
 

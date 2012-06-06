@@ -371,6 +371,8 @@ sub printdata
 sub writepb
 {
 	my($ddir) = @_;
+
+	print STDERR "DBG: \$ddir = {$ddir}\n";
 	my $dtype = (-f "$ddir/Build.PL" ? "MB" : "MM");
 	if(system $PBPROG => $dtype){
 		return $? >> 8;
@@ -408,8 +410,7 @@ sub main
 	);
 
 	chdir $dir or die "chdir: $!";
-
-	my $ret = writepb($dir);
+	my $ret = writepb("$dir/src/$distdir");
 	if($ret){
 		print STDERR "$PROG: failed to write PKGBUILD: error $ret\n";
 		return 1;

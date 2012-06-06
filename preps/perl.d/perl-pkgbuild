@@ -65,7 +65,8 @@ sub main
 		$script = 'Build.PL';
 		$make = './Build';
 		$iargs = q{installdirs=vendor destdir="$pkgdir"};
-		push @badenv, 'PERL_MB_OPT', 'MODULEBUILDRC=/dev/null';
+		push @exports, 'MODULEBUILDRC=/dev/null';
+		push @badenv, 'PERL_MB_OPT';
 	}
 
 	my %funcs;
@@ -74,7 +75,7 @@ sub main
 		$funcs{$f}{'beg'} = startfunc($f);
 		# Module::Build uses env vars for each stage of Build
 		if($type eq 'MB'){
-			$funcs{$f}{'beg'} = <<"ENDTXT";
+			$funcs{$f}{'beg'} .= functxt(<<"ENDTXT");
 export @exports
 unset @badenv
 ENDTXT

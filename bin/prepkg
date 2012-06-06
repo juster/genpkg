@@ -31,7 +31,6 @@ case "$PREPSPATH" in
 '')	err "set PREPSPATH before calling $prog"
 esac
 
-tmp="/tmp/$prog.$$"
 for flav in "$PREPSPATH"/*
 do
 	pkgname="$1"

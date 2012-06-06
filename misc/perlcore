@@ -12,7 +12,7 @@ package CoreDist;
 use File::Basename qw(basename);
 use File::Find qw();
 *findfile = *File::Find::find;
-*findver = *main::findver;
+*grokver = *main::grokver;
 
 sub pathmod
 {
@@ -25,24 +25,44 @@ sub pathmod
 	return $p;
 }
 
-sub findpms # a foolhardy task!
+sub findpmfiles
 {
 	my($ddir) = @_;
-	my @modpaths;
-
 	$ddir = "$ddir/lib" if(-d "$ddir/lib");
+
+	my @modpaths;
 	my $finder = sub {
 		return unless(/[.]pm$/);
 		return if(m{/t/});
-
+		
 		my $p = $_;
 		s{^\Q$ddir\E/}{};
 		my $m = pathmod($_);
 		push @modpaths, [ $m, $p ];
 	};
-	findfile({ 'no_chdir' => 1, 'wanted' => $finder }, $ddir);
 
-	return @modpaths;	
+	findfile({ 'no_chdir' => 1, 'wanted' => $finder }, $ddir);
+	return @modpaths;
+}
+
+sub solopm
+{
+	my($ddir) = @_;
+	my $p = $ddir;
+	$p =~ s{.+/}{};
+
+	my $m = $p;
+	$m =~ s{-}{::}g;
+	$p =~ s{.+-}{};
+	$p = "$ddir/$p.pm";
+
+	return (-f $p ? [ $m, $p ] : undef);
+}
+
+sub findpms # a foolhardy task!
+{
+	my($ddir) = @_;
+	return solopm($ddir) || findpmfiles($ddir);
 }
 
 sub findpl
@@ -74,9 +94,9 @@ sub scan_distroot
 	} map { "$distroot/$_" } @dists;
 
 	return map {
-		my($m, $p) = @$_;
-		my $v = findver($p, $m);
-		($v ? [ $m, $v ] : ());
+		my(undef, $p) = @$_;
+		my($m, $v) = grokver($p);
+		($m ? [ $m, $v ] : ());
 	} @found;
 }
 
@@ -94,7 +114,7 @@ use File::Find qw();
 use File::stat;
 
 *findfile = *File::Find::find;
-*findver = *main::findver;
+*grokver = *main::grokver;
 
 sub findmods
 {
@@ -126,16 +146,16 @@ sub findmods
 	# few seconds after that. Process the rest.
 	my @mods;
 	for my $modfile (@modfiles){
-		my($mod, $ctime) = @$modfile;
+		my($path, $ctime) = @$modfile;
 		next if $ctime - $oldest > 5; # ignore newer files
 
-		my $path = $mod;
-		$mod =~ s{[.]pm\z}{};
-		$mod =~ s{\A$libdir}{};
-		$mod =~ s{/}{::}g;
+#		my $mod = $path;
+#		$mod =~ s{[.]pm\z}{};
+#		$mod =~ s{\A$libdir}{};
+#		$mod =~ s{/}{::}g;
 
-		my $ver = findver($path, $mod);
-		if($ver){
+		my($mod, $ver) = grokver($path);
+		if($mod){
 			push @mods, [ $mod, $ver ];
 		}else{
 			warn "failed to find version in $path\n";
@@ -148,26 +168,33 @@ sub findmods
 
 package main;
 
-sub findver
+sub grokver
 {
-	my($path, $mod) = @_;
+	my($path) = @_;
 
 	open(my $fh, '<', $path) or die("open $path: $!");
 
-	my $m = ($mod
-		? qr/(?:\$${mod}::VERSION|\$VERSION)/
-		: qr/\$VERSION/);
-
+	my $m = qr/\$VERSION/;
+	my $pkg;
 	while(<$fh>){
-		next unless(/\s*$m\s*=\s*.+/);
-		chomp;
-		my $ver = do { no strict; eval };
-		return $ver unless($@);
-		die qq{$path:$. bad version string "$_"\n};
+		if(/^\s*package\s+([\w:_-]+)\s*;/){
+			$pkg = $1;
+			$m = qr/\$${pkg}::VERSION|\$VERSION/;
+		}elsif($pkg && /\s*$m\s*=\s*.+/){
+			chomp;
+			my $ver = do { no strict; eval };
+			if($@ || !defined $ver || $ver eq q{}){
+				warn qq{$path:$.: bad version string: $_\n};
+				return ();
+			}else{
+				#print STDERR "DBG: grokked $pkg - $ver from $path\n";
+				return ($pkg, $ver);
+			}
+		}
 	}
 
 	close($fh);
-	return undef;
+	return ();
 }
 
 sub delmods

@@ -21,7 +21,6 @@ package Convert;
 *DBG = *main::DBG;
 *vardir = *main::vardir;
 
-use LWP::UserAgent qw();
 use YAML::XS qw();
 use version qw();
 

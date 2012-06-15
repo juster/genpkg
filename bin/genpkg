@@ -104,7 +104,13 @@ do
 	PREPSPATH="$prepd" PKGVAR="$vard" prepkg "$pkg" > PKGDATA
 	ret=$?
 	case $ret in
-	0)	echo "$pkgd/$pkg" ;;
+	0)	echo "$pkgd/$pkg"
+		;;
+	101)	# 101 from prepkg means cleanup
+		cd
+		rm -r "$pkgd/$pkg"
+		exit 1
+		;;
 	*)	rm PKGDATA
 		exit $ret
 	esac

@@ -82,9 +82,9 @@ sub main
 		if($guess){
 			return 100
 		}else{
-			## Return a hard error to prepkg if perl- package.
-			err(qq{failed to find perl dist similar to '$dist'});
-			return 1
+			## If its a perl- package tell prepkg to cleanup.
+			print STDERR qq{$PROG: failed to find perl dist similar to '$dist'\n};
+			return 101
 		}
 	}
 	fetchdist($cpath);

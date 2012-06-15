@@ -4,8 +4,10 @@ prog=prepkg
 
 err()
 {
+	ret=$1
+	shift
 	echo "$prog: $*" 1>&2
-	exit 1
+	exit $ret
 }
 
 basicmeta()
@@ -24,11 +26,11 @@ basicmeta()
 
 case $# in
 0)	echo "usage: $prog [package name]" 1>&2
-	exit 1
+	exit 2
 esac
 
 case "$PREPSPATH" in
-'')	err "set PREPSPATH before calling $prog"
+'')	err 2 "set PREPSPATH before calling $prog"
 esac
 
 for flav in "$PREPSPATH"/*
@@ -40,11 +42,14 @@ do
 	
 	case "$prepret" in
 	100)	;; # loop
+	101) exit 101 ;; # tell genpkg to cleanup
 	0)	basicmeta
 		exit 0 ;;
-	1)	err "$flav encountered an error" ;;
-	*)	err "$flav returned error code $prepret" ;;
+	1)	err 1 "$flav encountered an error" ;;
+	*)	err 1 "$flav returned error code $prepret" ;;
 	esac
 done
 
-err "no matching meta generator found for '$1'"
+echo "no matching meta generator found for '$1'" 1>&2
+exit 101
+

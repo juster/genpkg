@@ -80,9 +80,9 @@ sub main
 	my ($realname, $cpath) = matchdist($dist);
 	unless($realname){
 		if($guess){
-			return 2
+			return 100
 		}else{
-			## Return a hard error to makepkgmeta if perl- package.
+			## Return a hard error to prepkg if perl- package.
 			err(qq{failed to find perl dist similar to '$dist'});
 			return 1
 		}

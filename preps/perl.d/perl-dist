@@ -171,12 +171,11 @@ sub _perldepver
 
 	# Fix perl-style vstrings which have a leading "v".
 	return $perlver if($perlver =~ s/\Av//);
-	return $perlver unless($perlver =~ /\A(\d+)[.](\d{3})(\d{1,3})\z/);
 
-	# Re-apply the missing trailing zeroes.
-	my $patch = $3;
-	$patch .= q{0} x (3 - length $patch);
-	return sprintf('%d.%d.%d', $1, $2, $patch);
+	my @v;
+	return $perlver unless(@v = $perlver =~ /\A(\d+)[.](\d{1,3})(\d{0,3})\z/);
+	pop @v unless($v[2]);
+	return join q{.}, map { int } @v; # int removes zeroes
 }
 
 #---PUBLIC FUNCNTION---

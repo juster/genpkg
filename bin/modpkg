@@ -119,11 +119,13 @@ $modi eval {
 		fput $name $code beg
 	}
 
-	proc move {srcname destname args} {
+	proc move {srcname pats destname} {
 		upvar #0 $srcname src $destname dest
-		foreach pat $args {
-			set idx [lsearch -glob $src "$pat*"]
-			if {$idx == -1} { error "$pat was not found in $srcname" }
+		foreach pat $pats {
+			set idx [lsearch -glob $src $pat*]
+			if { $idx == -1 } {
+				error "$pat was not found in $srcname"
+			}
 			lappend dest [lindex $src $idx]
 			set src [lreplace $src $idx $idx]
 		}
@@ -157,7 +159,7 @@ $modi eval {
 			}
 		}
 
-		error "$name was not found in $type"
+		error "$depname was not found in $type"
 	}
 }
 

@@ -1,5 +1,5 @@
 set provides {perl-app-perlbrew=$pkgver}
-move makedepends checkdepends perl-io-all perl-path-class perl-file-temp
+move makedepends { perl-io-all perl-path-class perl-file-temp } checkdepends
 setdep makedepends perl-extutils-makemaker>=5.59
 set license custom:MIT
 fappend package {

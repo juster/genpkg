@@ -119,12 +119,12 @@ do
 	mod="$modsd/$pkg"
 	if [ -f "$mod" -a -r "$mod" ]
 	then
+		echo "Moding with $mod." 1>&2
 		trap 'rm -f PKGDATA.new' 1 2 15
 
 		# Duplicate the version in case modpkg modifies it.
 		if cat PKGDATA | dupver | modpkg "$mod" > PKGDATA.new
 		then
-			echo "Modified with $mod." 1>&2
 			mv PKGDATA.new PKGDATA
 		else
 			echo "$prog: modpkg failed." 1>&2

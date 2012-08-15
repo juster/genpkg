@@ -27,7 +27,7 @@ case $openssl in
 	fi
 esac
 
-awk -v digstr="$digstr" -v openssl="$openssl" -v prog="$PROG" '
+awk -v digstr="$digs" -v openssl="$openssl" -v prog="$PROG" '
 BEGIN {
 	diglen = split(digstr, digalgs)
 	FS = "\n"; RS = ""; ORS = "\n\n"

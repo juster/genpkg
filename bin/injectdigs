@@ -4,24 +4,55 @@ PROG=injectdigs
 
 if [ $# -eq 0 ]
 then
-	digstr="md5 sha512"
+	digs="md5 sha512"
 else
-	digstr=$*
+	digs=$*
 fi
 
-if ! which openssl > /dev/null
-then
-	echo "$PROG: openssl needs to be installed to calculate digests"
-	exit 2
-fi
+openssl=0
+for dig in $digs
+do
+	if ! which "${dig}sum" >/dev/null 2>&1
+	then
+		openssl=1
+		break
+	fi
+done
 
-awk -v digstr="$digstr" -v prog="$PROG" '
+case $openssl in
+1)	if ! which openssl >/dev/null 2>&1
+	then
+		echo "$PROG: [`echo $digs | tr ' ' /`]sum or openssl need to be installed"
+		exit 2
+	fi
+esac
+
+awk -v digstr="$digstr" -v openssl="$openssl" -v prog="$PROG" '
 BEGIN {
 	diglen = split(digstr, digalgs)
 	FS = "\n"; RS = ""; ORS = "\n\n"
 }
 
 function calcdigs(alg, files)
+{
+	if(0+openssl){
+		return openssldigs(alg, files)
+	}else{
+		return sumdigs(alg, files)
+	}
+}
+
+function sumdigs(alg, files)
+{
+	cmd = alg "sum " files
+	digests = ""
+	while(cmd | getline > 0){
+		digests = digests $1 "\n"
+	}
+	close(cmd)
+	return digests
+}
+function openssldigs(alg, files)
 {
 	cmd = "openssl " alg " " files
 	digests = ""

@@ -31,7 +31,7 @@ sub startfunc
 	return <<"ENDTXT";
 ${name}()
 (
-  cd "\$_dir"
+  cd "\$srcdir/\$_ddir"
 ENDTXT
 }
 

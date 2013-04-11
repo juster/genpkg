@@ -33,14 +33,6 @@ $1 == "maintainer" { maintainer = $2; next }
 # pkgdesc has the only value where parameters do not expand.
 $1 == "pkgdesc" { output[$1] = qnoexpand($2); next }
 
-$1 == "customvars" {
-	for(i = 2; i <= NF; i++){
-		customvars[i - 1] = $i
-	}
-	customlen = NF - 1
-	next
-}
-
 {
 	for(i = 2; i <= NF; i++) $i = qexpand($i)
 	if(($1 in strfield) || ($1 in cfield)){
@@ -49,8 +41,6 @@ $1 == "customvars" {
 		arrtxt = wraparray(length($1) + 2)
 		if(arrfield[$1]){
 			output[$1] = arrtxt
-		}else{
-			unk[$1] = arrtxt
 		}
 	}
 }
@@ -72,17 +62,6 @@ END {
 		v = output[f]
 		if(f in cfield) f = "_" f
 		print f, v
-	}
-
-	for(i = 1; i <= customlen; i++){
-		f = customvars[i]
-		if(f in unk){
-			print "_" f, unk[f]
-		}else{
-			printf("pbfields: error: customvar \"%s\" has no value\n", f) \
-				> "/dev/stderr"
-			exit 100
-		}
 	}
 }
 

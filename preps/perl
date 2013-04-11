@@ -25,12 +25,11 @@ sub matchdist
 		or err('PKGVAR env variable is unset');
 
 	if(!-f "$var/cpan.dists" || -M "$var/cpan.dists" > 1) {
-		print STDERR "$PROG: Refreshing local CPAN data... ";
+		print STDERR "$PROG: Refreshing local CPAN data.\n";
 		my $cwd = getcwd();
 		chdir $var or die "chdir: $!";
 		system 'fetchcpan';
-		die "FAILED\n" unless($? == 0);
-		print STDERR "OK\n";
+		exit 1 unless($? == 0);
 		chdir $cwd or die "chdir: $!";
 	}
 

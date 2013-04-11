@@ -3,7 +3,7 @@
 mirror=${CPANMIRROR:-ftp://cpan.pair.com}
 path=/modules/02packages.details.txt.gz
 
-curl --silent "$mirror$path" | gzip -dc | awk '
+curl --silent "$mirror$path" | zcat 2>/dev/null | awk '
 NR < 10 { next }
 {
     file = a[split($3, a, "/")]
@@ -29,6 +29,8 @@ NR < 10 { next }
 }
 
 END {
+    if(NR == 0) exit(1)
+
     for (dist in dists) {
         ver = dists[dist]
         print dist, ver, paths[dist] | "sort > cpan.dists"
@@ -58,3 +60,10 @@ function decver (vs)
 }
 
 '
+
+if [ $? -ne 0 ]; then
+    echo "fetchcpan: failed to download package list from CPAN" 1>&2
+    exit 1
+fi
+
+exit 0

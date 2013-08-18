@@ -23,6 +23,9 @@ files like PKGBUILDs are created.
 Run ``./setup mods'' to install the modification scripts from the mods/
 directory to ~/pkg/mods.
 
+You will also need to install the YAML::XS perl module as well.
+I use cpanminus for that.
+
 CONTACT
 
 Questions? Comments? Loathing? Send me email.

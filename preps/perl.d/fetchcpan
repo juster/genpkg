@@ -7,17 +7,13 @@ curl --silent "$mirror$path" | zcat 2>/dev/null | awk '
 NR < 10 { next }
 {
     file = a[split($3, a, "/")]
-
-    if (!match(file, /[-_][vV]?[0-9]+/)) {
-        #print "error: failed to grok " $3 | "cat 1>&2"
-        next
-    }
-    ver  = substr(file, RSTART+1)
-    dist = substr(file, 1, RSTART-1)
+    ver = a[split(file, a, "[-_]")]
+    dist = substr(file, 1, length(file) - length(ver) - 1)
+    if(!dist) next # ignore dists with no versions
 
     sub(/[.]tar[.].*$|[.]zip$/, "", ver)
     sub(/^[vV]/, "", ver)
-    sub(/[.]pm$/, "", dist)
+    sub(/[.]pm$/, "", dist) # srsly?
 
     if(dist == "perl") next
 
